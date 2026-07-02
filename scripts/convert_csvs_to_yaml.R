@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
 csv_dir <- file.path("current_csvs")
 readme_path <- file.path(csv_dir, "README.md")
 modules_dir <- file.path("modules")
+target_module_version <- "v1.0.0"
 
 normalize_name <- function(x) {
   x <- tolower(trimws(as.character(x)))
@@ -227,6 +228,10 @@ normalize_table_name <- function(table_name, prefix, add_prefix) {
   paste0(prefix, table_name)
 }
 
+is_major_release <- function(version) {
+  grepl("^v[0-9]+\\.0\\.0$", version)
+}
+
 readme_lines <- readLines(readme_path, warn = FALSE)
 prefix_map <- read_prefix_map(readme_lines)
 prefix_rules <- read_prefix_rules(readme_lines)
@@ -301,6 +306,7 @@ for (csv_file in csv_files) {
   type_col <- find_column(df, c("data_type", "type", "datatype", "sql_type"), required = TRUE)
   desc_col <- find_column(df, c("description", "field_description", "column_description"), required = FALSE)
   pk_col <- find_column(df, c("primary_key", "is_primary_key", "primarykey", "pk", "key"), required = FALSE)
+  deprecated_col <- find_column(df, c("deprecated", "is_deprecated"), required = FALSE)
   table_desc_col <- find_column(df, c("table_description", "table_desc"), required = FALSE)
 
   add_prefix <- if (package_name %in% names(rule_lookup)) {
@@ -330,6 +336,27 @@ for (csv_file in csv_files) {
   df <- df[keep, , drop = FALSE]
   if (nrow(df) == 0) {
     warning(sprintf("Skipping CSV with no valid rows after cleanup: %s", basename(csv_file)))
+    next
+  }
+
+  deprecated_flags <- rep(FALSE, nrow(df))
+  if (!is.null(deprecated_col)) {
+    deprecated_flags <- vapply(df[[deprecated_col]], to_bool, logical(1))
+  }
+
+  if (is_major_release(target_module_version) && any(deprecated_flags)) {
+    warning(sprintf(
+      "Dropping %d deprecated rows from %s for major release %s.",
+      sum(deprecated_flags),
+      basename(csv_file),
+      target_module_version
+    ))
+    df <- df[!deprecated_flags, , drop = FALSE]
+    deprecated_flags <- deprecated_flags[!deprecated_flags]
+  }
+
+  if (nrow(df) == 0) {
+    warning(sprintf("Skipping CSV with no remaining rows after deprecated filtering: %s", basename(csv_file)))
     next
   }
 
@@ -367,6 +394,7 @@ for (csv_file in csv_files) {
         sanitize_description(NA, sprintf("Field %s in table %s.", field_name, table_name))
       }
       is_pk <- if (!is.null(pk_col)) to_bool(rows[[pk_col]][[j]]) else FALSE
+      is_deprecated <- if (!is.null(deprecated_col)) to_bool(rows[[deprecated_col]][[j]]) else FALSE
 
       field_entry <- list(
         name = field_name,
@@ -374,6 +402,10 @@ for (csv_file in csv_files) {
         description = field_description,
         is_primary_key = is_pk
       )
+
+      if (!is_major_release(target_module_version) && is_deprecated) {
+        field_entry$deprecated <- TRUE
+      }
 
       ref <- infer_reference(field_name, field_type)
       if (!is.null(ref)) {
@@ -396,7 +428,7 @@ for (csv_file in csv_files) {
     tables = tables
   )
 
-  out_dir <- file.path(modules_dir, package_name, "v1.0.0")
+  out_dir <- file.path(modules_dir, package_name, target_module_version)
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   out_file <- file.path(out_dir, "definition.yaml")
 

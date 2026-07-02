@@ -566,11 +566,6 @@ tables:
     type: float
     description: The minimum detectable relative risk.
     is_primary_key: no
-  - name: attrition_fraction
-    type: float
-    description: 'DEPRECATED: The fraction of the target population lost by between
-      initial cohort and outcome model due to various restrictions.'
-    is_primary_key: no
   - name: generalizability_max_sdm
     type: float
     description: The maximum absolute standardized difference of mean comparing before
@@ -596,11 +591,6 @@ tables:
   - name: mdrr_diagnostic
     type: varchar(20)
     description: Pass / warning / fail classification of the MDRR diagnostic.
-    is_primary_key: no
-  - name: attrition_diagnostic
-    type: varchar(20)
-    description: 'DEPRECATED: Pass / warning / fail classification of the attrition
-      fraction diagnostic.'
     is_primary_key: no
   - name: generalizability_diagnostic
     type: varchar(20)

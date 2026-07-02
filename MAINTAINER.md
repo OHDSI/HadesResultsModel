@@ -26,6 +26,10 @@ For consumer-facing usage and model structure, see [README.md](README.md).
 - Module definitions are stored at `modules/<ModuleName>/v<semver>/definition.yaml`.
 - Treat released versions as immutable.
 - For module changes, create a new semver folder for that module.
+- Deprecated field lifecycle policy:
+  - Minor/micro updates may keep fields and mark them as `deprecated: true`.
+  - Major updates must remove deprecated fields from the module definition.
+  - Current extraction target is `v1.0.0`, so deprecated legacy CSV fields are dropped.
 - Ensure every table and field has meaningful descriptions.
 - Keep cross-module references limited to:
   - `cg_cohort_definition.cohort_definition_id`
@@ -126,7 +130,7 @@ The suite validates:
 
 Workflow file: `.github/workflows/ci.yaml`
 
-- Trigger: pull requests targeting `main`
+- Trigger: every push and pull requests targeting `main`
 - Installs required R packages
 - Runs the full `testthat` suite
 

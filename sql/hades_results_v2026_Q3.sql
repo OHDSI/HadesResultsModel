@@ -923,14 +923,12 @@ CREATE TABLE IF NOT EXISTS "cm_diagnostics_summary" (
   "shared_sdm_family_wise_min_p" DOUBLE,
   "equipoise" DOUBLE,
   "mdrr" DOUBLE,
-  "attrition_fraction" DOUBLE,
   "generalizability_max_sdm" DOUBLE,
   "ease" DOUBLE,
   "balance_diagnostic" VARCHAR(20),
   "shared_balance_diagnostic" VARCHAR(20),
   "equipoise_diagnostic" VARCHAR(20),
   "mdrr_diagnostic" VARCHAR(20),
-  "attrition_diagnostic" VARCHAR(20),
   "generalizability_diagnostic" VARCHAR(20),
   "ease_diagnostic" VARCHAR(20),
   "unblind" INTEGER,
@@ -1700,10 +1698,6 @@ CREATE TABLE IF NOT EXISTS "sccs_diagnostics_summary" (
   "mdrr_diagnostic" VARCHAR(20),
   "unblind" INTEGER,
   "unblind_for_evidence_synthesis" INTEGER,
-  "time_trend_p" DOUBLE,
-  "pre_exposure_p" DOUBLE,
-  "time_trend_diagnostic" VARCHAR(20),
-  "pre_exposure_diagnostic" VARCHAR(20),
   PRIMARY KEY ("analysis_id", "exposures_outcome_set_id", "covariate_id", "database_id"),
   FOREIGN KEY ("database_id") REFERENCES "database_meta_data" ("database_id")
 );
@@ -1716,17 +1710,6 @@ CREATE TABLE IF NOT EXISTS "sccs_era" (
   "era_name" VARCHAR,
   "database_id" VARCHAR NOT NULL,
   PRIMARY KEY ("exposures_outcome_set_id", "analysis_id", "era_type", "era_id", "database_id"),
-  FOREIGN KEY ("database_id") REFERENCES "database_meta_data" ("database_id")
-);
-
-CREATE TABLE IF NOT EXISTS "sccs_event_dep_observation" (
-  "analysis_id" INTEGER NOT NULL,
-  "exposures_outcome_set_id" INTEGER NOT NULL,
-  "database_id" VARCHAR NOT NULL,
-  "months_to_end" INTEGER NOT NULL,
-  "censored" INTEGER NOT NULL,
-  "outcomes" INTEGER,
-  PRIMARY KEY ("analysis_id", "exposures_outcome_set_id", "database_id", "months_to_end", "censored"),
   FOREIGN KEY ("database_id") REFERENCES "database_meta_data" ("database_id")
 );
 
@@ -1820,10 +1803,6 @@ CREATE TABLE IF NOT EXISTS "sccs_time_trend" (
   "observed_subjects" INTEGER,
   "ratio" DOUBLE,
   "adjusted_ratio" DOUBLE,
-  "outcome_rate" DOUBLE,
-  "adjusted_rate" DOUBLE,
-  "stable" INTEGER,
-  "p" DOUBLE,
   PRIMARY KEY ("analysis_id", "exposures_outcome_set_id", "database_id", "calendar_year", "calendar_month"),
   FOREIGN KEY ("database_id") REFERENCES "database_meta_data" ("database_id")
 );

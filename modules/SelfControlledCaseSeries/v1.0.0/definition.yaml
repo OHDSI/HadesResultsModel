@@ -461,25 +461,6 @@ tables:
     description: Observed over expected ratio, where the expected count is adjusted
       for age, season, or calendar time, as specified in the analysis.
     is_primary_key: no
-  - name: outcome_rate
-    type: float
-    description: Number of outcomes divided by the number of subjects.
-    is_primary_key: no
-  - name: adjusted_rate
-    type: float
-    description: The outcome rate, adjusted for age, season, or calendar time, as
-      specified in the analysis.
-    is_primary_key: no
-  - name: stable
-    type: int
-    description: Does the adjusted rate not deviate significantly from the mean? (1
-      = stable, 0 = unstable)
-    is_primary_key: no
-  - name: p
-    type: float
-    description: The two-sided p-value against the null hypothesis that the rate is
-      equal to the mean.
-    is_primary_key: no
 - name: sccs_time_to_event
   description: Results data table sccs_time_to_event.
   fields:
@@ -659,53 +640,4 @@ tables:
     type: int
     description: Is unblinding the result for inclusion in evidence synthesis recommended?
       This ignores the MDRR diagnostic. (1 = yes, 0 = no)
-    is_primary_key: no
-  - name: time_trend_p
-    type: float
-    description: The p for whether the mean monthly ratio between observed and expected
-      is no greater than 1.25.
-    is_primary_key: no
-  - name: pre_exposure_p
-    type: float
-    description: One-sided p-value for whether the rate before expore is higher than
-      after, against the null of no difference.
-    is_primary_key: no
-  - name: time_trend_diagnostic
-    type: varchar(20)
-    description: Pass / warning / fail / not evaluated classification of the time
-      trend (unstalbe months) diagnostic.
-    is_primary_key: no
-  - name: pre_exposure_diagnostic
-    type: varchar(20)
-    description: Pass / warning / fail / not evaluated classification of the time
-      trend (unstalbe months) diagnostic.
-    is_primary_key: no
-- name: sccs_event_dep_observation
-  description: Results data table sccs_event_dep_observation.
-  fields:
-  - name: analysis_id
-    type: int
-    description: A foreign key referencing the sccs_analysis table.
-    is_primary_key: yes
-  - name: exposures_outcome_set_id
-    type: int
-    description: A foreign key referencing the sccs_exposures_outcome_set table.
-    is_primary_key: yes
-  - name: database_id
-    type: varchar
-    description: Foreign key referencing the database.
-    is_primary_key: yes
-    references: database_meta_data.database_id
-  - name: months_to_end
-    type: int
-    description: Number of months until observation end.
-    is_primary_key: yes
-  - name: censored
-    type: int
-    description: Whether the observation is censored (meaning, not equal to the end
-      of database time). (1 = censored, 0 = not censored).
-    is_primary_key: yes
-  - name: outcomes
-    type: int
-    description: Number of outcomes observed during the month.
     is_primary_key: no

@@ -78,6 +78,9 @@
         "is_primary_key": {
           "type": "boolean"
         },
+        "deprecated": {
+          "type": "boolean"
+        },
         "references": {
           "type": "string",
           "enum": [
