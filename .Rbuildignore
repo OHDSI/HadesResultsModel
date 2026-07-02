@@ -1,0 +1,15 @@
+^CRAN-RELEASE$
+^.*\.Rproj$
+^\.Rproj\.user$
+deploy.sh
+compare_versions
+^cran-comments.md$
+_pkgdown.yml
+docs
+.github
+^CRAN-SUBMISSION$
+revdep/
+sql/
+scripts/
+current_csvs/
+MAINTAINER.md

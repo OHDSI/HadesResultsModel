@@ -12,7 +12,7 @@ if (!dir.exists(releases_root)) {
   stop("Expected releases/ directory to exist. Run scripts/build_latest_release.R first.")
 }
 
-find_latest_release_file <- function(release_dir) {
+findLatestReleaseFile <- function(release_dir) {
   files <- list.files(
     release_dir,
     pattern = "^release_v[0-9]{4}_Q[1-4]\\.ya?ml$",
@@ -30,7 +30,7 @@ find_latest_release_file <- function(release_dir) {
   files[[ord[[length(ord)]]]]
 }
 
-normalize_sql_type <- function(raw_type) {
+normalizeSqlType <- function(raw_type) {
   t <- tolower(trimws(as.character(raw_type)))
 
   if (grepl("^varchar\\s*\\(", t) || grepl("^char\\s*\\(", t) || grepl("^decimal\\s*\\(", t) || grepl("^numeric\\s*\\(", t)) {
@@ -49,11 +49,11 @@ normalize_sql_type <- function(raw_type) {
   toupper(t)
 }
 
-quote_ident <- function(x) {
+quoteIdent <- function(x) {
   paste0('"', gsub('"', '""', x), '"')
 }
 
-build_create_table_sql <- function(table_def, available_tables) {
+buildCreateTableSql <- function(table_def, available_tables) {
   fields <- table_def$fields
   if (length(fields) == 0) {
     stop(sprintf("Table %s has no fields", table_def$name))
@@ -65,16 +65,16 @@ build_create_table_sql <- function(table_def, available_tables) {
 
   for (field in fields) {
     col_name <- field$name
-    col_type <- normalize_sql_type(field$type)
+    col_type <- normalizeSqlType(field$type)
     not_null <- if (isTRUE(field$is_primary_key)) " NOT NULL" else ""
 
     column_lines <- c(
       column_lines,
-      sprintf("%s %s%s", quote_ident(col_name), col_type, not_null)
+      sprintf("%s %s%s", quoteIdent(col_name), col_type, not_null)
     )
 
     if (isTRUE(field$is_primary_key)) {
-      pk_fields <- c(pk_fields, quote_ident(col_name))
+      pk_fields <- c(pk_fields, quoteIdent(col_name))
     }
 
     if (!is.null(field$references) && nzchar(field$references)) {
@@ -87,9 +87,9 @@ build_create_table_sql <- function(table_def, available_tables) {
             fk_lines,
             sprintf(
               "FOREIGN KEY (%s) REFERENCES %s (%s)",
-              quote_ident(col_name),
-              quote_ident(ref_table),
-              quote_ident(ref_col)
+              quoteIdent(col_name),
+              quoteIdent(ref_table),
+              quoteIdent(ref_col)
             )
           )
         }
@@ -109,12 +109,12 @@ build_create_table_sql <- function(table_def, available_tables) {
 
   sprintf(
     "CREATE TABLE IF NOT EXISTS %s (\n  %s\n);",
-    quote_ident(table_def$name),
+    quoteIdent(table_def$name),
     paste(all_lines, collapse = ",\n  ")
   )
 }
 
-release_file <- find_latest_release_file(releases_root)
+release_file <- findLatestReleaseFile(releases_root)
 manifest <- yaml::read_yaml(release_file)
 
 if (is.null(manifest$release_version) || !nzchar(manifest$release_version)) {
@@ -181,7 +181,7 @@ for (entry in ordered_tables) {
     current_module <- entry$module
     ddl_lines <- c(ddl_lines, sprintf("-- Module: %s", current_module))
   }
-  ddl_lines <- c(ddl_lines, build_create_table_sql(entry$table, available_tables), "")
+  ddl_lines <- c(ddl_lines, buildCreateTableSql(entry$table, available_tables), "")
 }
 
 dir.create(sql_root, recursive = TRUE, showWarnings = FALSE)

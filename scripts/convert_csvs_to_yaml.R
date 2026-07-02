@@ -9,12 +9,12 @@ readme_path <- file.path(csv_dir, "README.md")
 modules_dir <- file.path("modules")
 target_module_version <- "v1.0.0"
 
-normalize_name <- function(x) {
+normalizeName <- function(x) {
   x <- tolower(trimws(as.character(x)))
   gsub("[^a-z0-9]+", "", x)
 }
 
-snake_case <- function(x) {
+toSnakeCase <- function(x) {
   x <- tolower(trimws(as.character(x)))
   x <- gsub("[^a-z0-9]+", "_", x)
   x <- gsub("_+", "_", x)
@@ -22,11 +22,11 @@ snake_case <- function(x) {
   x
 }
 
-is_valid_identifier <- function(x) {
+isValidIdentifier <- function(x) {
   grepl("^[a-z][a-z0-9_]*$", x)
 }
 
-to_bool <- function(x) {
+toBool <- function(x) {
   if (is.null(x) || is.na(x)) {
     return(FALSE)
   }
@@ -34,7 +34,7 @@ to_bool <- function(x) {
   val %in% c("yes", "y", "true", "t", "1")
 }
 
-sanitize_description <- function(x, fallback) {
+sanitizeDescription <- function(x, fallback) {
   text <- trimws(as.character(x))
   if (is.na(text) || !nzchar(text) || identical(toupper(text), "NA")) {
     return(fallback)
@@ -45,9 +45,9 @@ sanitize_description <- function(x, fallback) {
   text
 }
 
-find_column <- function(df, candidates, required = TRUE) {
-  norm <- normalize_name(names(df))
-  candidate_norm <- normalize_name(candidates)
+findColumn <- function(df, candidates, required = TRUE) {
+  norm <- normalizeName(names(df))
+  candidate_norm <- normalizeName(candidates)
   hit <- names(df)[match(candidate_norm, norm, nomatch = 0)]
   hit <- hit[nzchar(hit)]
   if (length(hit) > 0) {
@@ -62,7 +62,7 @@ find_column <- function(df, candidates, required = TRUE) {
   NULL
 }
 
-extract_markdown_tables <- function(lines) {
+extractMarkdownTables <- function(lines) {
   idx <- grep("^\\s*\\|.*\\|\\s*$", lines)
   if (length(idx) == 0) {
     return(list())
@@ -90,19 +90,19 @@ extract_markdown_tables <- function(lines) {
     if (length(block) < 2) {
       next
     }
-    split_row <- function(row) {
+    splitRow <- function(row) {
       parts <- strsplit(row, "\\|", fixed = FALSE)[[1]]
       parts <- trimws(parts)
       parts <- parts[parts != ""]
       parts
     }
 
-    header <- split_row(block[[1]])
+    header <- splitRow(block[[1]])
     if (length(header) == 0) {
       next
     }
 
-    rows <- lapply(block[-1], split_row)
+    rows <- lapply(block[-1], splitRow)
     if (length(rows) == 0) {
       next
     }
@@ -132,10 +132,10 @@ extract_markdown_tables <- function(lines) {
   parsed
 }
 
-read_prefix_map <- function(readme_lines) {
-  tables <- extract_markdown_tables(readme_lines)
+readPrefixMap <- function(readme_lines) {
+  tables <- extractMarkdownTables(readme_lines)
   for (tbl in tables) {
-    norm_names <- normalize_name(names(tbl))
+    norm_names <- normalizeName(names(tbl))
     if (all(c("prefix", "package") %in% norm_names)) {
       prefix_col <- names(tbl)[match("prefix", norm_names)]
       package_col <- names(tbl)[match("package", norm_names)]
@@ -152,12 +152,12 @@ read_prefix_map <- function(readme_lines) {
   data.frame(package = character(), prefix = character(), stringsAsFactors = FALSE)
 }
 
-read_prefix_rules <- function(readme_lines) {
-  tables <- extract_markdown_tables(readme_lines)
+readPrefixRules <- function(readme_lines) {
+  tables <- extractMarkdownTables(readme_lines)
   out <- data.frame(package = character(), add_prefix = logical(), stringsAsFactors = FALSE)
 
   for (tbl in tables) {
-    norm_names <- normalize_name(names(tbl))
+    norm_names <- normalizeName(names(tbl))
     pkg_idx <- match("package", norm_names)
     rule_idx <- match(TRUE, norm_names %in% c("addprefix", "prefixincsv", "alreadyprefixed", "prefixalreadyincsv"))
 
@@ -188,8 +188,8 @@ read_prefix_rules <- function(readme_lines) {
   out
 }
 
-infer_reference <- function(field_name, field_type) {
-  field <- snake_case(field_name)
+inferReference <- function(field_name, field_type) {
+  field <- toSnakeCase(field_name)
   type_norm <- tolower(trimws(as.character(field_type)))
 
   if (field %in% c("database_id", "database_meta_data_id") && grepl("char|string|text", type_norm)) {
@@ -201,9 +201,9 @@ infer_reference <- function(field_name, field_type) {
   NULL
 }
 
-infer_add_prefix <- function(table_names, prefix) {
+inferAddPrefix <- function(table_names, prefix) {
   clean_prefix <- sub("_$", "", prefix)
-  table_names <- snake_case(table_names)
+  table_names <- toSnakeCase(table_names)
 
   if (any(table_names == clean_prefix)) {
     return(FALSE)
@@ -217,8 +217,8 @@ infer_add_prefix <- function(table_names, prefix) {
   share < 0.6
 }
 
-normalize_table_name <- function(table_name, prefix, add_prefix) {
-  table_name <- snake_case(table_name)
+normalizeTableName <- function(table_name, prefix, add_prefix) {
+  table_name <- toSnakeCase(table_name)
   if (!add_prefix) {
     return(table_name)
   }
@@ -228,13 +228,13 @@ normalize_table_name <- function(table_name, prefix, add_prefix) {
   paste0(prefix, table_name)
 }
 
-is_major_release <- function(version) {
+isMajorRelease <- function(version) {
   grepl("^v[0-9]+\\.0\\.0$", version)
 }
 
 readme_lines <- readLines(readme_path, warn = FALSE)
-prefix_map <- read_prefix_map(readme_lines)
-prefix_rules <- read_prefix_rules(readme_lines)
+prefix_map <- readPrefixMap(readme_lines)
+prefix_rules <- readPrefixRules(readme_lines)
 
 file_to_package <- c(
   cohortIncidenceRdms = "CohortIncidence",
@@ -293,7 +293,7 @@ for (csv_file in csv_files) {
   if (is.null(prefix_raw) || is.na(prefix_raw) || !nzchar(prefix_raw)) {
     stop(sprintf("No prefix mapping found for package '%s' from file '%s'.", package_name, basename(csv_file)))
   }
-  prefix <- paste0(sub("_+$", "", snake_case(prefix_raw)), "_")
+  prefix <- paste0(sub("_+$", "", toSnakeCase(prefix_raw)), "_")
 
   df <- read.csv(csv_file, stringsAsFactors = FALSE, check.names = FALSE)
   if (nrow(df) == 0) {
@@ -301,13 +301,13 @@ for (csv_file in csv_files) {
     next
   }
 
-  table_col <- find_column(df, c("table_name", "table", "tablename"), required = TRUE)
-  field_col <- find_column(df, c("column_name", "field_name", "column", "field"), required = TRUE)
-  type_col <- find_column(df, c("data_type", "type", "datatype", "sql_type"), required = TRUE)
-  desc_col <- find_column(df, c("description", "field_description", "column_description"), required = FALSE)
-  pk_col <- find_column(df, c("primary_key", "is_primary_key", "primarykey", "pk", "key"), required = FALSE)
-  deprecated_col <- find_column(df, c("deprecated", "is_deprecated"), required = FALSE)
-  table_desc_col <- find_column(df, c("table_description", "table_desc"), required = FALSE)
+  table_col <- findColumn(df, c("table_name", "table", "tablename"), required = TRUE)
+  field_col <- findColumn(df, c("column_name", "field_name", "column", "field"), required = TRUE)
+  type_col <- findColumn(df, c("data_type", "type", "datatype", "sql_type"), required = TRUE)
+  desc_col <- findColumn(df, c("description", "field_description", "column_description"), required = FALSE)
+  pk_col <- findColumn(df, c("primary_key", "is_primary_key", "primarykey", "pk", "key"), required = FALSE)
+  deprecated_col <- findColumn(df, c("deprecated", "is_deprecated"), required = FALSE)
+  table_desc_col <- findColumn(df, c("table_description", "table_desc"), required = FALSE)
 
   add_prefix <- if (package_name %in% names(rule_lookup)) {
     unname(rule_lookup[[package_name]])
@@ -315,15 +315,15 @@ for (csv_file in csv_files) {
     NA
   }
   if (is.null(add_prefix) || is.na(add_prefix)) {
-    add_prefix <- infer_add_prefix(df[[table_col]], prefix)
+    add_prefix <- inferAddPrefix(df[[table_col]], prefix)
   }
 
-  table_ids <- snake_case(df[[table_col]])
-  field_ids <- snake_case(df[[field_col]])
+  table_ids <- toSnakeCase(df[[table_col]])
+  field_ids <- toSnakeCase(df[[field_col]])
   type_vals <- trimws(as.character(df[[type_col]]))
 
   keep <- nzchar(table_ids) & nzchar(field_ids) & nzchar(type_vals) &
-    is_valid_identifier(table_ids) & is_valid_identifier(field_ids)
+    isValidIdentifier(table_ids) & isValidIdentifier(field_ids)
 
   if (any(!keep)) {
     warning(sprintf(
@@ -341,10 +341,10 @@ for (csv_file in csv_files) {
 
   deprecated_flags <- rep(FALSE, nrow(df))
   if (!is.null(deprecated_col)) {
-    deprecated_flags <- vapply(df[[deprecated_col]], to_bool, logical(1))
+    deprecated_flags <- vapply(df[[deprecated_col]], toBool, logical(1))
   }
 
-  if (is_major_release(target_module_version) && any(deprecated_flags)) {
+  if (isMajorRelease(target_module_version) && any(deprecated_flags)) {
     warning(sprintf(
       "Dropping %d deprecated rows from %s for major release %s.",
       sum(deprecated_flags),
@@ -362,7 +362,7 @@ for (csv_file in csv_files) {
 
   normalized_tables <- vapply(
     df[[table_col]],
-    FUN = normalize_table_name,
+    FUN = normalizeTableName,
     FUN.VALUE = character(1),
     prefix = prefix,
     add_prefix = add_prefix
@@ -379,22 +379,22 @@ for (csv_file in csv_files) {
 
     table_description <- if (!is.null(table_desc_col) && any(nzchar(trimws(rows[[table_desc_col]])))) {
       first_desc <- rows[[table_desc_col]][nzchar(trimws(rows[[table_desc_col]]))][[1]]
-      sanitize_description(first_desc, sprintf("Results data table %s.", table_name))
+      sanitizeDescription(first_desc, sprintf("Results data table %s.", table_name))
     } else {
-      sanitize_description(NA, sprintf("Results data table %s.", table_name))
+      sanitizeDescription(NA, sprintf("Results data table %s.", table_name))
     }
 
     fields <- vector("list", nrow(rows))
     for (j in seq_len(nrow(rows))) {
-      field_name <- snake_case(rows[[field_col]][[j]])
+      field_name <- toSnakeCase(rows[[field_col]][[j]])
       field_type <- trimws(as.character(rows[[type_col]][[j]]))
       field_description <- if (!is.null(desc_col)) {
-        sanitize_description(rows[[desc_col]][[j]], sprintf("Field %s in table %s.", field_name, table_name))
+        sanitizeDescription(rows[[desc_col]][[j]], sprintf("Field %s in table %s.", field_name, table_name))
       } else {
-        sanitize_description(NA, sprintf("Field %s in table %s.", field_name, table_name))
+        sanitizeDescription(NA, sprintf("Field %s in table %s.", field_name, table_name))
       }
-      is_pk <- if (!is.null(pk_col)) to_bool(rows[[pk_col]][[j]]) else FALSE
-      is_deprecated <- if (!is.null(deprecated_col)) to_bool(rows[[deprecated_col]][[j]]) else FALSE
+      is_pk <- if (!is.null(pk_col)) toBool(rows[[pk_col]][[j]]) else FALSE
+      is_deprecated <- if (!is.null(deprecated_col)) toBool(rows[[deprecated_col]][[j]]) else FALSE
 
       field_entry <- list(
         name = field_name,
@@ -403,11 +403,11 @@ for (csv_file in csv_files) {
         is_primary_key = is_pk
       )
 
-      if (!is_major_release(target_module_version) && is_deprecated) {
+      if (!isMajorRelease(target_module_version) && is_deprecated) {
         field_entry$deprecated <- TRUE
       }
 
-      ref <- infer_reference(field_name, field_type)
+      ref <- inferReference(field_name, field_type)
       if (!is.null(ref)) {
         field_entry$references <- ref
       }

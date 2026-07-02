@@ -8,27 +8,26 @@ suppressPackageStartupMessages({
   library(SqlRender)
 })
 
-find_repo_path <- function(relative_path) {
-  candidates <- c(
-    file.path(getwd(), relative_path),
-    file.path(getwd(), "..", relative_path),
-    file.path(getwd(), "..", "..", relative_path)
+findPkgPath <- function(...) {
+  parts <- c(...)
+
+  installed_path <- do.call(
+    system.file,
+    c(parts, list(package = "HadesResultsModel"))
   )
-  candidates <- normalizePath(candidates, winslash = "/", mustWork = FALSE)
-  hit <- candidates[file.exists(candidates)]
-  if (length(hit) > 0) {
-    return(hit[[1]])
+
+  if (nzchar(installed_path) && file.exists(installed_path)) {
+    return(installed_path)
   }
-  normalizePath(candidates[[1]], winslash = "/", mustWork = FALSE)
+
+  dev_path <- do.call(file.path, c("inst", parts))
+  normalizePath(dev_path, winslash = "/", mustWork = FALSE)
 }
 
-schema_path <- find_repo_path(file.path("schemas", "hades_schema.json"))
-release_schema_path <- find_repo_path(file.path("schemas", "release_manifest_schema.json"))
-modules_path <- find_repo_path("modules")
-repo_root <- dirname(modules_path)
-releases_path <- file.path(repo_root, "releases")
-scripts_path <- file.path(repo_root, "scripts")
-sql_path <- file.path(repo_root, "sql")
+schema_path <- findPkgPath("schemas", "hades_schema.json")
+release_schema_path <- findPkgPath("schemas", "release_manifest_schema.json")
+modules_path <- findPkgPath("modules")
+releases_path <- findPkgPath("releases")
 
 yaml_files <- if (dir.exists(modules_path)) {
   list.files(
@@ -41,27 +40,27 @@ yaml_files <- if (dir.exists(modules_path)) {
   character(0)
 }
 
-release_version_rank <- function(version_string) {
+releaseVersionRank <- function(version_string) {
   year <- as.integer(sub("^v([0-9]{4})_Q[1-4]$", "\\1", version_string))
   quarter <- as.integer(sub("^v[0-9]{4}_Q([1-4])$", "\\1", version_string))
   (year * 10L) + quarter
 }
 
-semver_sort_key <- function(version_string) {
+semVerSortKey <- function(version_string) {
   parts <- as.integer(strsplit(sub("^v", "", version_string), "\\.")[[1]])
   sprintf("%09d.%09d.%09d", parts[[1]], parts[[2]], parts[[3]])
 }
 
-list_module_versions <- function(module_dir) {
+listModuleVersions <- function(module_dir) {
   versions <- list.dirs(module_dir, recursive = FALSE, full.names = FALSE)
   versions <- versions[grepl("^v[0-9]+\\.[0-9]+\\.[0-9]+$", versions)]
   if (length(versions) == 0) {
     return(character(0))
   }
-  versions[order(vapply(versions, semver_sort_key, character(1)))]
+  versions[order(vapply(versions, semVerSortKey, character(1)))]
 }
 
-find_latest_release_manifest <- function(releases_dir) {
+findLatestReleaseManifest <- function(releases_dir) {
   if (!dir.exists(releases_dir)) {
     return(NA_character_)
   }
@@ -76,7 +75,7 @@ find_latest_release_manifest <- function(releases_dir) {
   }
 
   versions <- sub("^release_(v[0-9]{4}_Q[1-4])\\.ya?ml$", "\\1", basename(release_files))
-  ranks <- vapply(versions, release_version_rank, integer(1))
+  ranks <- vapply(versions, releaseVersionRank, integer(1))
   release_files[[which.max(ranks)]]
 }
 
@@ -110,7 +109,7 @@ test_that("All module YAML files validate against JSON Schema", {
   }
 })
 
-normalize_sql_type <- function(raw_type) {
+normalizeSqlType <- function(raw_type) {
   t <- tolower(trimws(as.character(raw_type)))
 
   if (grepl("^varchar\\s*\\(", t) || grepl("^char\\s*\\(", t) || grepl("^decimal\\s*\\(", t) || grepl("^numeric\\s*\\(", t)) {
@@ -129,11 +128,11 @@ normalize_sql_type <- function(raw_type) {
   toupper(t)
 }
 
-quote_ident <- function(x) {
+quoteIdent <- function(x) {
   paste0('"', gsub('"', '""', x), '"')
 }
 
-build_create_table_sql <- function(table_def, available_tables) {
+buildCreateTableSql <- function(table_def, available_tables) {
   fields <- table_def$fields
   if (length(fields) == 0) {
     stop(sprintf("Table %s has no fields", table_def$name))
@@ -145,16 +144,16 @@ build_create_table_sql <- function(table_def, available_tables) {
 
   for (field in fields) {
     col_name <- field$name
-    col_type <- normalize_sql_type(field$type)
+    col_type <- normalizeSqlType(field$type)
     not_null <- if (isTRUE(field$is_primary_key)) " NOT NULL" else ""
 
     column_lines <- c(
       column_lines,
-      sprintf("%s %s%s", quote_ident(col_name), col_type, not_null)
+      sprintf("%s %s%s", quoteIdent(col_name), col_type, not_null)
     )
 
     if (isTRUE(field$is_primary_key)) {
-      pk_fields <- c(pk_fields, quote_ident(col_name))
+      pk_fields <- c(pk_fields, quoteIdent(col_name))
     }
 
     if (!is.null(field$references) && nzchar(field$references)) {
@@ -167,9 +166,9 @@ build_create_table_sql <- function(table_def, available_tables) {
             fk_lines,
             sprintf(
               "FOREIGN KEY (%s) REFERENCES %s (%s)",
-              quote_ident(col_name),
-              quote_ident(ref_table),
-              quote_ident(ref_col)
+              quoteIdent(col_name),
+              quoteIdent(ref_table),
+              quoteIdent(ref_col)
             )
           )
         }
@@ -189,7 +188,7 @@ build_create_table_sql <- function(table_def, available_tables) {
 
   sprintf(
     "CREATE TABLE IF NOT EXISTS %s (\n  %s\n);",
-    quote_ident(table_def$name),
+    quoteIdent(table_def$name),
     paste(all_lines, collapse = ",\n  ")
   )
 }
@@ -222,7 +221,7 @@ test_that("Module YAML definitions compile to DuckDB DDL", {
 
   for (mod in all_modules) {
     for (tbl in mod$tables) {
-      ddl <- build_create_table_sql(tbl, available_tables)
+      ddl <- buildCreateTableSql(tbl, available_tables)
       exec_ok <- TRUE
       exec_err <- ""
       tryCatch(
@@ -244,19 +243,13 @@ test_that("Module YAML definitions compile to DuckDB DDL", {
 test_that("Latest release manifest generates holistic DDL executable in DuckDB", {
   skip_if_not(file.exists(release_schema_path), "Release manifest schema file not found")
 
-  build_release_script <- file.path(scripts_path, "build_latest_release.R")
-  generate_ddl_script <- file.path(scripts_path, "generate_release_ddl.R")
+  temp_releases <- file.path(tempdir(), paste0("releases-", as.integer(Sys.time())))
+  temp_sql <- file.path(tempdir(), paste0("sql-", as.integer(Sys.time())))
 
-  skip_if_not(file.exists(build_release_script), "build_latest_release.R not found")
-  skip_if_not(file.exists(generate_ddl_script), "generate_release_ddl.R not found")
-
-  old_wd <- getwd()
-  on.exit(setwd(old_wd), add = TRUE)
-  setwd(repo_root)
-
-  source(build_release_script, local = new.env(parent = baseenv()))
-
-  latest_manifest_file <- find_latest_release_manifest(releases_path)
+  latest_manifest_file <- buildLatestRelease(
+    modulesRoot = modules_path,
+    releasesRoot = temp_releases
+  )
   skip_if(is.na(latest_manifest_file), "No release manifests found after build")
 
   manifest <- yaml::read_yaml(latest_manifest_file)
@@ -281,10 +274,12 @@ test_that("Latest release manifest generates holistic DDL executable in DuckDB",
     info = paste("Release manifest schema validation failed for", latest_manifest_file, schema_error_message)
   )
 
-  source(generate_ddl_script, local = new.env(parent = baseenv()))
-
-  latest_version <- sub("^release_(v[0-9]{4}_Q[1-4])\\.ya?ml$", "\\1", basename(latest_manifest_file))
-  sql_file <- file.path(sql_path, sprintf("hades_results_%s.sql", latest_version))
+  sql_file <- generateReleaseDdl(
+    releaseFile = latest_manifest_file,
+    modulesRoot = modules_path,
+    releasesRoot = temp_releases,
+    sqlRoot = temp_sql
+  )
   expect_true(file.exists(sql_file), info = paste("Expected generated SQL file not found:", sql_file))
 
   sql_lines <- readLines(sql_file, warn = FALSE)
@@ -323,7 +318,7 @@ test_that("Every version after the first has a migration script that transforms 
 
   for (module_dir in module_dirs) {
     module_name <- basename(module_dir)
-    version_dirs <- list_module_versions(module_dir)
+    version_dirs <- listModuleVersions(module_dir)
     if (length(version_dirs) < 2) {
       next
     }
@@ -378,7 +373,7 @@ test_that("Every version after the first has a migration script that transforms 
             )
           }
 
-          DBI::dbExecute(con, build_create_table_sql(table_def, shared_tables))
+          DBI::dbExecute(con, buildCreateTableSql(table_def, shared_tables))
         }
 
         DBI::dbExecute(con, rendered_sql)

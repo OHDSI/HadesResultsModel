@@ -17,7 +17,7 @@ month <- as.integer(format(today, "%m"))
 quarter <- ((month - 1) %/% 3) + 1
 release_version <- sprintf("v%s_Q%d", year, quarter)
 
-latest_semver <- function(module_dir) {
+latestSemVer <- function(module_dir) {
   versions <- list.dirs(module_dir, recursive = FALSE, full.names = FALSE)
   versions <- versions[grepl("^v[0-9]+\\.[0-9]+\\.[0-9]+$", versions)]
   if (length(versions) == 0) {
@@ -35,7 +35,7 @@ if (length(module_dirs) == 0) {
 }
 
 module_names <- basename(module_dirs)
-module_versions <- vapply(module_dirs, latest_semver, character(1), USE.NAMES = FALSE)
+module_versions <- vapply(module_dirs, latestSemVer, character(1), USE.NAMES = FALSE)
 
 valid <- !is.na(module_versions)
 if (!all(valid)) {

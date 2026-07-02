@@ -1,0 +1,23 @@
+Package: HadesResultsModel
+Type: Package
+Title: HADES Results Model Definitions and Utilities
+Version: 0.1.0
+Authors@R: person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut", "cre"))
+Description: Lightweight R package for working with OHDSI HADES results model
+    resources, including module YAML definitions, release manifests, JSON schemas,
+    and migration and DDL generation utilities.
+License: Apache License (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports:
+    yaml,
+    DBI
+Suggests:
+    testthat,
+    SqlRender,
+    jsonlite,
+    jsonvalidate,
+    duckdb
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0

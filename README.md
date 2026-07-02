@@ -1,37 +1,52 @@
-# HADES Results Model Repository
+# HadesResultsModel
 
-This repository centralizes OHDSI HADES results data model definitions as versioned YAML modules for the OHDSI HADES ecosystem.
+`HadesResultsModel` is an R package that bundles OHDSI HADES results model resources and utilities.
 
-It provides:
+It includes:
 
-- Versioned, package-scoped schema modules
-- A consistent YAML structure across packages
-- JSON Schema validation for module definitions
-- Calendar-versioned ecosystem release manifests
-- Generated holistic SQL DDL per ecosystem release
+- Versioned YAML module definitions
+- Release manifests for quarterly ecosystem versions
+- JSON Schemas for validation
+- R functions to build release manifests and generate holistic DDL
+
+## Package-First Layout
+
+This repository now follows standard R package structure. Model resources live under `inst/`:
+
+- `inst/modules/`: versioned module definitions (`<ModuleName>/v<semver>/definition.yaml`)
+- `inst/releases/`: release manifests (`release_vYYYY_QX.yaml`)
+- `inst/schemas/`: JSON Schemas used for validation
+- `R/`: package source code
+- `man/`: generated function documentation
+- `tests/testthat/`: validation tests
+- `current_csvs/`: legacy CSV source material used for conversion/reference
+- `sql/`: generated holistic SQL output (working/output directory)
+
+When the package is installed, files under `inst/` are available through `system.file(...)`.
 
 ## Quick Start
 
-1. Read module definitions in `modules/<ModuleName>/v<semver>/definition.yaml`.
-2. Use ecosystem release manifests in `releases/release_vYYYY_QX.yaml`.
-3. Use generated DDL in `sql/hades_results_vYYYY_QX.sql`.
+1. Inspect module definitions in `inst/modules/<ModuleName>/v<semver>/definition.yaml`.
+2. Inspect release manifests in `inst/releases/release_vYYYY_QX.yaml`.
+3. Generate release artifacts using package functions.
 
-## Repository Layout
+Example:
 
-- `current_csvs/`: legacy source CSV files and source mapping notes
-- `modules/`: versioned YAML definitions, one module per package
-- `schemas/`: JSON Schema used to validate YAML definitions
-- `releases/`: ecosystem release manifests (`release_vYYYY_QX.yaml`)
-- `sql/`: generated holistic ecosystem DDL files (`hades_results_vYYYY_QX.sql`)
-- `scripts/`: repository utility scripts
-- `tests/testthat/`: validation tests
-- `.github/workflows/`: CI workflows
+```r
+library(HadesResultsModel)
+
+# Build/overwrite the current quarter release manifest in package releases dir
+manifestPath <- buildLatestRelease()
+
+# Generate holistic DDL for latest release into local ./sql
+sqlPath <- generateReleaseDdl(sqlRoot = file.path(getwd(), "sql"))
+```
 
 ## YAML Module Shape
 
 Each module file is stored at:
 
-`modules/<ModuleName>/v<semver>/definition.yaml`
+`inst/modules/<ModuleName>/v<semver>/definition.yaml`
 
 Expected top-level keys:
 
@@ -65,23 +80,17 @@ Only the following shared references are allowed:
 Ecosystem releases use calendar versioning:
 
 - Format: `vYYYY_QX` (for example `v2026_Q3`)
-- Release manifest file: `releases/release_vYYYY_QX.yaml`
-- Holistic SQL file: `sql/hades_results_vYYYY_QX.sql`
+- Release manifest file: `inst/releases/release_vYYYY_QX.yaml`
+- Generated SQL file: `sql/hades_results_vYYYY_QX.sql`
 
 ## Migration And Version Upgrades
 
 Module upgrades may include migration SQL for moving from an older version to a newer one.
 
-- Migration scripts are stored alongside the target module version, for example `modules/CohortGenerator/v1.0.0/migration.sql`.
-- The migration SQL is OHDSI SQL and can be translated with SqlRender before execution.
+- Migration scripts are stored alongside the target module version, for example `inst/modules/CohortGenerator/v1.0.0/migration.sql`.
+- Migration SQL is OHDSI SQL and can be translated with SqlRender before execution.
 - Major version upgrades should remove deprecated fields and may add new tables or columns through migration scripts.
 
 ## For Maintainers
 
-Operational workflows are documented in [MAINTAINER.md](MAINTAINER.md), including:
-
-- CSV-to-YAML conversion
-- Dependency setup
-- Release manifest generation
-- Holistic DDL generation
-- Test and CI workflow
+Operational workflows are documented in [MAINTAINER.md](MAINTAINER.md).

@@ -1,29 +1,31 @@
 # Maintainer Guide
 
-This document covers repository operations for maintainers of the HADES results model.
+This document covers repository operations for maintainers of the HADES results model R package.
 
 For consumer-facing usage and model structure, see [README.md](README.md).
 
 ## Scope
 
-- Convert legacy CSV schema specs into YAML modules.
-- Maintain module versions.
+- Maintain versioned module definitions and migrations.
 - Build calendar-version ecosystem release manifests.
-- Generate holistic DDL from the latest release manifest.
+- Generate holistic DDL from release manifests.
 - Run validation tests and CI checks.
+- Optionally convert legacy CSV schema specs into YAML modules.
 
 ## Repository Components (Maintainer-Relevant)
 
-- `scripts/convert_csvs_to_yaml.R`: CSV-to-YAML conversion
-- `scripts/build_latest_release.R`: zero-parameter release manifest builder
-- `scripts/generate_release_ddl.R`: zero-parameter DDL generator using latest release
-- `schemas/hades_schema.json`: module schema validation
-- `schemas/release_manifest_schema.json`: release manifest validation
+- `inst/modules/`: versioned YAML module definitions
+- `inst/releases/`: release manifests
+- `inst/schemas/hades_schema.json`: module schema validation
+- `inst/schemas/release_manifest_schema.json`: release manifest validation
+- `R/build_latest_release.R`: release manifest builder (`buildLatestRelease()`)
+- `R/migration_engine.R`: release + migration utilities (`generateReleaseDdl()`, `applyMigrationSql()`)
+- `scripts/convert_csvs_to_yaml.R`: legacy CSV-to-YAML conversion helper
 - `tests/testthat/test-model_validation.R`: schema and DuckDB execution tests
 
 ## Module Versioning Rules
 
-- Module definitions are stored at `modules/<ModuleName>/v<semver>/definition.yaml`.
+- Module definitions are stored at `inst/modules/<ModuleName>/v<semver>/definition.yaml`.
 - Treat released versions as immutable.
 - For module changes, create a new semver folder for that module.
 - Deprecated field lifecycle policy:
@@ -43,13 +45,44 @@ For consumer-facing usage and model structure, see [README.md](README.md).
 
 Use a migration script when moving from one module version to the next.
 
-- Store the migration alongside the target version, for example `modules/<ModuleName>/v1.2.0/migration.sql`.
+- Store the migration alongside the target version, for example `inst/modules/<ModuleName>/v1.2.0/migration.sql`.
 - Write the migration in OHDSI SQL so it can be translated with SqlRender.
 - The script should transform the prior version's schema into the new version's schema.
 - The CI test scans every module folder, requires a migration script for every non-initial version, and executes the rendered SQL against DuckDB.
 - Keep migrations additive and explicit where possible so the schema transition remains easy to validate.
 
-## Convert Legacy CSVs To YAML
+## Build Release Manifest (Package Function)
+
+Run:
+
+```bash
+Rscript -e "HadesResultsModel::buildLatestRelease()"
+```
+
+Behavior:
+
+1. Computes current release version from `Sys.Date()` and quarter.
+2. Scans module directories in `inst/modules/` (or installed package resources).
+3. Selects the highest semantic version per module via `package_version()`.
+4. Writes/overwrites `inst/releases/release_vYYYY_QX.yaml`.
+
+## Generate Holistic Release DDL (Package Function)
+
+Run:
+
+```bash
+Rscript -e "HadesResultsModel::generateReleaseDdl(sqlRoot='sql')"
+```
+
+Behavior:
+
+1. Scans `inst/releases/` (or installed package resources) for `release_vYYYY_QX.yaml` files.
+2. Picks the latest file by year and quarter.
+3. Loads module/version mapping from that manifest.
+4. Compiles all tables into one SQL file.
+5. Writes/overwrites `sql/hades_results_vYYYY_QX.sql`.
+
+## Convert Legacy CSVs To YAML (Optional)
 
 Run:
 
@@ -62,7 +95,7 @@ Behavior:
 1. Reads mapping/rules from `current_csvs/README.md`.
 2. Detects key CSV columns dynamically.
 3. Normalizes table names using prefix handling.
-4. Writes module YAML definitions under `modules/<Package>/v1.0.0/definition.yaml`.
+4. Writes module YAML definitions under `inst/modules/<Package>/v1.0.0/definition.yaml`.
 
 ## Required R Packages
 
@@ -86,40 +119,14 @@ Calendar release format:
 
 - `vYYYY_QX` (example: `v2026_Q3`)
 
-### 1) Build Latest Release Manifest
+Recommended sequence:
 
-Run:
-
-```bash
-Rscript scripts/build_latest_release.R
-```
-
-This script takes no parameters and:
-
-1. Computes current release version from `Sys.Date()` and quarter.
-2. Scans each module directory in `modules/`.
-3. Selects the highest semantic version per module via `package_version()`.
-4. Writes/overwrites `releases/release_vYYYY_QX.yaml`.
-
-### 2) Generate Holistic Release DDL
-
-Run:
-
-```bash
-Rscript scripts/generate_release_ddl.R
-```
-
-This script takes no parameters and:
-
-1. Scans `releases/` for `release_vYYYY_QX.yaml` files.
-2. Picks the latest file by year and quarter.
-3. Loads module/version mapping from that manifest.
-4. Compiles all tables into one SQL file.
-5. Writes/overwrites `sql/hades_results_vYYYY_QX.sql`.
+1. Run `Rscript -e "HadesResultsModel::buildLatestRelease()"`.
+2. Run `Rscript -e "HadesResultsModel::generateReleaseDdl(sqlRoot='sql')"`.
 
 ## Release Manifest Validation
 
-Release manifests are validated with `schemas/release_manifest_schema.json`.
+Release manifests are validated with `inst/schemas/release_manifest_schema.json`.
 
 Key constraints:
 
@@ -137,8 +144,8 @@ Rscript -e "testthat::test_dir('tests/testthat', reporter='summary')"
 
 The suite validates:
 
-- All module YAML files against `schemas/hades_schema.json`
-- Latest release manifest against `schemas/release_manifest_schema.json`
+- All module YAML files against `inst/schemas/hades_schema.json`
+- Latest release manifest against `inst/schemas/release_manifest_schema.json`
 - Module-level and holistic release DDL execution in in-memory DuckDB
 
 ## CI
@@ -152,7 +159,7 @@ Workflow file: `.github/workflows/ci.yaml`
 ## Typical Maintainer Sequence
 
 1. Update module definitions (new semver folders when needed).
-2. Run `Rscript scripts/build_latest_release.R`.
-3. Run `Rscript scripts/generate_release_ddl.R`.
+2. Run `Rscript -e "HadesResultsModel::buildLatestRelease()"`.
+3. Run `Rscript -e "HadesResultsModel::generateReleaseDdl(sqlRoot='sql')"`.
 4. Run `Rscript -e "testthat::test_dir('tests/testthat', reporter='summary')"`.
 5. Open PR and verify CI passes.
