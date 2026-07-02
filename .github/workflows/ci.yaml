@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -19,7 +19,7 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          Rscript -e 'install.packages(c("testthat", "yaml", "jsonvalidate", "jsonlite", "DBI", "duckdb"), repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("testthat", "yaml", "jsonvalidate", "jsonlite", "DBI", "duckdb"), repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
 
       - name: Run testthat suite
         run: |
