@@ -17,3 +17,5 @@
 #' @keywords internal
 "_PACKAGE"
 
+#' @importFrom utils read.csv
+NULL

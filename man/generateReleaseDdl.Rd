@@ -12,8 +12,8 @@ generateReleaseDdl(
 )
 }
 \arguments{
-\item{releaseFile}{Optional path to a release manifest YAML file. When \code{NULL},
-the latest manifest in \code{releasesRoot} is used.}
+\item{releaseFile}{Optional path to a release manifest YAML file. When
+\code{NULL}, the latest manifest in \code{releasesRoot} is used.}
 
 \item{modulesRoot}{Path to the modules root directory.}
 
@@ -25,6 +25,7 @@ the latest manifest in \code{releasesRoot} is used.}
 The full path to the generated SQL file.
 }
 \description{
-Builds SQL DDL for all tables in the selected release manifest and writes the
-resulting SQL script to disk.
+Builds OHDSI SQL DDL for all tables in the selected release manifest and
+writes the resulting SQL script to disk. This is a maintainer utility;
+use \code{\link[=generateModuleDdl]{generateModuleDdl()}} for programmatic DDL generation.
 }

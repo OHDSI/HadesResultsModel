@@ -18,9 +18,16 @@ For consumer-facing usage and model structure, see [README.md](README.md).
 - `inst/releases/`: release manifests
 - `inst/schemas/hades_schema.json`: module schema validation
 - `inst/schemas/release_manifest_schema.json`: release manifest validation
-- `R/build_latest_release.R`: release manifest builder (`buildLatestRelease()`)
-- `R/migration_engine.R`: release + migration utilities (`generateReleaseDdl()`, `applyMigrationSql()`)
-- `scripts/convert_csvs_to_yaml.R`: legacy CSV-to-YAML conversion helper
+- `R/`: package source code with user-facing functions
+  - `migration_engine.R`: SQL generation and DDL compilation
+  - `migrate.R`: migration orchestration and version detection
+  - `convert_csv.R`: CSV-to-YAML conversion
+  - `test_migration.R`: migration validation
+  - `zzz-internal-helpers.R`: shared internal utilities
+- `extras/`: maintainer-only scripts (not part of package)
+  - `build_latest_release.R`: builds quarterly release manifests
+  - `generate_release_ddl.R`: generates combined release DDL
+  - `convert_csvs_to_yaml.R`: batch converts legacy CSVs to YAML
 - `tests/testthat/test-model_validation.R`: schema and DuckDB execution tests
 
 ## Module Versioning Rules
@@ -51,51 +58,56 @@ Use a migration script when moving from one module version to the next.
 - The CI test scans every module folder, requires a migration script for every non-initial version, and executes the rendered SQL against DuckDB.
 - Keep migrations additive and explicit where possible so the schema transition remains easy to validate.
 
-## Build Release Manifest (Package Function)
+## Build Release Manifest (Maintainer Script)
 
 Run:
 
 ```bash
-Rscript -e "HadesResultsModel::buildLatestRelease()"
+cd /path/to/HadesResultsModel
+Rscript extras/build_latest_release.R
 ```
 
 Behavior:
 
 1. Computes current release version from `Sys.Date()` and quarter.
-2. Scans module directories in `inst/modules/` (or installed package resources).
+2. Scans module directories in `inst/modules/`.
 3. Selects the highest semantic version per module via `package_version()`.
 4. Writes/overwrites `inst/releases/release_vYYYY_QX.yaml`.
 
-## Generate Holistic Release DDL (Package Function)
+Internally calls `buildLatestRelease()` from the extras script.
+
+## Generate Holistic Release DDL (Maintainer Script)
 
 Run:
 
 ```bash
-Rscript -e "HadesResultsModel::generateReleaseDdl(sqlRoot='sql')"
+cd /path/to/HadesResultsModel
+Rscript extras/generate_release_ddl.R
 ```
 
 Behavior:
 
-1. Scans `inst/releases/` (or installed package resources) for `release_vYYYY_QX.yaml` files.
+1. Scans `inst/releases/` for `release_vYYYY_QX.yaml` files.
 2. Picks the latest file by year and quarter.
 3. Loads module/version mapping from that manifest.
-4. Compiles all tables into one SQL file.
+4. Calls `generateReleaseDdl()` to compile all tables into one SQL file.
 5. Writes/overwrites `sql/hades_results_vYYYY_QX.sql`.
 
-## Convert Legacy CSVs To YAML (Optional)
+## Convert Legacy CSVs To YAML (Maintainer Script)
 
 Run:
 
 ```bash
-Rscript scripts/convert_csvs_to_yaml.R
+cd /path/to/HadesResultsModel
+Rscript extras/convert_csvs_to_yaml.R
 ```
 
 Behavior:
 
 1. Reads mapping/rules from `current_csvs/README.md`.
-2. Detects key CSV columns dynamically.
-3. Normalizes table names using prefix handling.
-4. Writes module YAML definitions under `inst/modules/<Package>/v1.0.0/definition.yaml`.
+2. Calls `convertCsvToYaml()` from the package for each CSV file.
+3. Maps CSV filenames to module names and prefixes.
+4. Writes module YAML definitions under `inst/modules/<Module>/v1.0.0/definition.yaml`.
 
 ## Required R Packages
 

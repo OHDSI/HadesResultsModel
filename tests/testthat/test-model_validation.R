@@ -79,6 +79,19 @@ findLatestReleaseManifest <- function(releases_dir) {
   release_files[[which.max(ranks)]]
 }
 
+# Source maintainer functions for testing (buildLatestRelease and helpers)
+# Try multiple path options for both development and installed package modes
+for (extras_path in c(
+  "../../extras/build_latest_release.R",
+  "extras/build_latest_release.R",
+  system.file("../extras/build_latest_release.R", package = "HadesResultsModel")
+)) {
+  if (file.exists(extras_path)) {
+    source(extras_path, local = TRUE)
+    break
+  }
+}
+
 test_that("All module YAML files validate against JSON Schema", {
   skip_if_not(file.exists(schema_path), "JSON schema file not found")
   skip_if(length(yaml_files) == 0, "No module YAML files found under modules/")
@@ -193,52 +206,49 @@ buildCreateTableSql <- function(table_def, available_tables) {
   )
 }
 
-test_that("Module YAML definitions compile to DuckDB DDL", {
+test_that("Module YAML definitions compile to DuckDB DDL via generateModuleDdl", {
   skip_if_not(file.exists(schema_path), "JSON schema file not found")
   skip_if(length(yaml_files) == 0, "No module YAML files found under modules/")
 
-  all_modules <- lapply(yaml_files, yaml::read_yaml)
+  # Generate OHDSI SQL with @database_schema parameter for SqlRender rendering
+  sql <- generateModuleDdl(module = NULL, version = "latest", modulesRoot = modules_path)
+  expect_true(is.character(sql) && nzchar(sql))
 
-  available_tables <- c("cg_cohort_definition", "database_meta_data")
-  for (mod in all_modules) {
-    for (tbl in mod$tables) {
-      available_tables <- c(available_tables, tbl$name)
-    }
-  }
-  available_tables <- unique(available_tables)
+  # Render for the schema we want to test, then translate for DuckDB
+  rendered_sql <- SqlRender::render(sql, database_schema = "main")
+  translated_sql <- SqlRender::translate(rendered_sql, targetDialect = "duckdb")
+  statements <- SqlRender::splitSql(translated_sql)
+  statements <- trimws(statements)
+  statements <- statements[nzchar(statements)]
 
   con <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
-  DBI::dbExecute(
-    con,
-    "CREATE TABLE IF NOT EXISTS \"cg_cohort_definition\" (\"cohort_definition_id\" BIGINT PRIMARY KEY);"
-  )
-  DBI::dbExecute(
-    con,
-    "CREATE TABLE IF NOT EXISTS \"database_meta_data\" (\"database_id\" VARCHAR PRIMARY KEY);"
-  )
-
-  for (mod in all_modules) {
-    for (tbl in mod$tables) {
-      ddl <- buildCreateTableSql(tbl, available_tables)
-      exec_ok <- TRUE
-      exec_err <- ""
-      tryCatch(
-        DBI::dbExecute(con, ddl),
-        error = function(e) {
-          exec_ok <<- FALSE
-          exec_err <<- conditionMessage(e)
-        }
-      )
-
-      expect_true(
-        exec_ok,
-        info = paste("Failed to execute DDL for table", tbl$name, exec_err)
-      )
-    }
+  for (stmt in statements) {
+    exec_ok  <- TRUE
+    exec_err <- ""
+    tryCatch(
+      DBI::dbExecute(con, stmt),
+      error = function(e) {
+        exec_ok  <<- FALSE
+        exec_err <<- conditionMessage(e)
+      }
+    )
+    expect_true(exec_ok, info = paste("Failed to execute DDL statement:", exec_err))
   }
 })
+
+# Retrieve a package-internal function regardless of whether the package was
+# loaded via devtools/R CMD check or the R source files were sourced directly.
+getInternalFn <- function(fnName) {
+  if (isNamespaceLoaded("HadesResultsModel")) {
+    get(fnName, envir = asNamespace("HadesResultsModel"), inherits = FALSE)
+  } else if (exists(fnName, envir = .GlobalEnv, inherits = FALSE)) {
+    get(fnName, envir = .GlobalEnv, inherits = FALSE)
+  } else {
+    stop(sprintf("'%s' not found in package namespace or global environment", fnName))
+  }
+}
 
 test_that("Latest release manifest generates holistic DDL executable in DuckDB", {
   skip_if_not(file.exists(release_schema_path), "Release manifest schema file not found")
@@ -274,7 +284,8 @@ test_that("Latest release manifest generates holistic DDL executable in DuckDB",
     info = paste("Release manifest schema validation failed for", latest_manifest_file, schema_error_message)
   )
 
-  sql_file <- generateReleaseDdl(
+  generateReleaseDdlFn <- getInternalFn("generateReleaseDdl")
+  sql_file <- generateReleaseDdlFn(
     releaseFile = latest_manifest_file,
     modulesRoot = modules_path,
     releasesRoot = temp_releases,
@@ -282,10 +293,10 @@ test_that("Latest release manifest generates holistic DDL executable in DuckDB",
   )
   expect_true(file.exists(sql_file), info = paste("Expected generated SQL file not found:", sql_file))
 
-  sql_lines <- readLines(sql_file, warn = FALSE)
-  sql_lines <- sql_lines[!grepl("^\\s*--", sql_lines)]
-  sql_text <- paste(sql_lines, collapse = "\n")
-  statements <- unlist(strsplit(sql_text, ";", fixed = TRUE))
+  raw_sql <- paste(readLines(sql_file, warn = FALSE), collapse = "\n")
+  rendered_sql <- SqlRender::render(raw_sql, database_schema = "main")
+  translated_sql <- SqlRender::translate(rendered_sql, targetDialect = "duckdb")
+  statements <- SqlRender::splitSql(translated_sql)
   statements <- trimws(statements)
   statements <- statements[nzchar(statements)]
   statements <- statements[!grepl("^--", statements)]
@@ -442,18 +453,6 @@ allDefTableNames <- function(moduleDefs) {
     }
   }
   unique(nms)
-}
-
-# Retrieve a package-internal function regardless of whether the package was
-# loaded via devtools/R CMD check or the R source files were sourced directly.
-getInternalFn <- function(fnName) {
-  if (isNamespaceLoaded("HadesResultsModel")) {
-    get(fnName, envir = asNamespace("HadesResultsModel"), inherits = FALSE)
-  } else if (exists(fnName, envir = .GlobalEnv, inherits = FALSE)) {
-    get(fnName, envir = .GlobalEnv, inherits = FALSE)
-  } else {
-    stop(sprintf("'%s' not found in package namespace or global environment", fnName))
-  }
 }
 
 # ---------------------------------------------------------------------------

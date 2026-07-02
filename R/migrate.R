@@ -43,6 +43,7 @@ sortedSemVers <- function(moduleDir) {
 #' @param modulesRoot Path to the package modules directory.
 #'
 #' @return A named list mapping module names to detected version strings.
+#' @export
 inferCurrentVersions <- function(
   connection,
   databaseSchema,

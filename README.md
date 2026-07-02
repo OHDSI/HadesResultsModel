@@ -26,21 +26,30 @@ When the package is installed, files under `inst/` are available through `system
 
 ## Quick Start
 
-1. Inspect module definitions in `inst/modules/<ModuleName>/v<semver>/definition.yaml`.
-2. Inspect release manifests in `inst/releases/release_vYYYY_QX.yaml`.
-3. Generate release artifacts using package functions.
-
-Example:
+### For End Users: Database Schema Migration and Validation
 
 ```r
 library(HadesResultsModel)
+connection <- DatabaseConnector::connect(dbms = "postgresql", ...)
 
-# Build/overwrite the current quarter release manifest in package releases dir
-manifestPath <- buildLatestRelease()
+# Detect current data model versions in your database
+versions <- inferCurrentVersions(connection)
 
-# Generate holistic DDL for latest release into local ./sql
-sqlPath <- generateReleaseDdl(sqlRoot = file.path(getwd(), "sql"))
+# Migrate database to latest versions
+migrateResultsModel(connection, targetVersions = NULL)  # NULL = latest
+
+# Test a migration SQL file for correctness
+testMigrationSql(
+  fromVersion = "v0.1.0",
+  toVersion = "v1.0.0",
+  fromModule = "CohortGenerator",
+  toModule = "CohortGenerator"
+)
 ```
+
+### For Maintainers: Managing Releases and Definitions
+
+See [MAINTAINER.md](MAINTAINER.md) for release manifests, DDL generation, and module versioning.
 
 ## YAML Module Shape
 
@@ -90,6 +99,23 @@ Module upgrades may include migration SQL for moving from an older version to a 
 - Migration scripts are stored alongside the target module version, for example `inst/modules/CohortGenerator/v1.0.0/migration.sql`.
 - Migration SQL is OHDSI SQL and can be translated with SqlRender before execution.
 - Major version upgrades should remove deprecated fields and may add new tables or columns through migration scripts.
+
+## Package Functions
+
+### User-Facing (Exported)
+
+- `inferCurrentVersions()` — Detect installed data model versions by fingerprinting database schema
+- `migrateResultsModel()` — Execute migration chain to upgrade schema to target versions
+- `convertCsvToYaml()` — Convert legacy CSV specifications to YAML module definitions
+- `yamlDefinitionToSql()` — Generate OHDSI SQL CREATE TABLE statements from YAML
+- `generateModuleDdl()` — Compile DDL for specific modules with proper table ordering
+- `testMigrationSql()` — Validate migration SQL files transform schemas correctly
+- `applyMigrationSql()` — Execute migration SQL via SqlRender with dialect translation
+
+### Internal (Not Exported)
+
+- `generateReleaseDdl()` — Compile holistic DDL for entire releases (used by maintainers)
+- `findLatestReleaseManifest()` — Locate the latest quarterly release manifest
 
 ## For Maintainers
 

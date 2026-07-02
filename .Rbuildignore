@@ -10,6 +10,6 @@ docs
 ^CRAN-SUBMISSION$
 revdep/
 sql/
-scripts/
+extras/
 current_csvs/
 MAINTAINER.md

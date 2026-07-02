@@ -24,7 +24,6 @@
 #'
 #' @return Full path to the latest release manifest, or `NA_character_` if none
 #' are found.
-#' @export
 findLatestReleaseManifest <- function(releasesDir = resolvePackageDir("releases")) {
   if (!dir.exists(releasesDir)) {
     return(NA_character_)
@@ -68,14 +67,25 @@ normalizeSqlType <- function(rawType) {
   toupper(t)
 }
 
-quoteIdent <- function(x) {
-  paste0('"', gsub('"', '""', x), '"')
+# Internal: resolve a version string to a folder name (e.g. "v1.0.0") for a
+# module directory. Pass "latest" to select the highest semantic version.
+resolveVersion <- function(version, moduleDir) {
+  if (identical(version, "latest")) {
+    ver <- latestSemVer(moduleDir)
+    if (is.na(ver)) stop(sprintf("No versioned definitions found in: %s", moduleDir))
+    return(ver)
+  }
+  if (startsWith(version, "v")) version else paste0("v", version)
 }
 
-buildCreateTableSql <- function(tableDef, availableTables) {
+# Internal: build an OHDSI SQL CREATE TABLE statement for a single table
+# definition. Uses @database_schema as a SqlRender parameter and unquoted
+# identifiers so SqlRender::render() can translate to any supported dialect.
+buildOhdsiCreateTableSql <- function(tableDef, availableTables) {
+  tableName <- tableDef$name
   fields <- tableDef$fields
   if (length(fields) == 0) {
-    stop(sprintf("Table %s has no fields", tableDef$name))
+    stop(sprintf("Table %s has no fields", tableName))
   }
 
   columnLines <- character(0)
@@ -86,14 +96,10 @@ buildCreateTableSql <- function(tableDef, availableTables) {
     colName <- field$name
     colType <- normalizeSqlType(field$type)
     notNull <- if (isTRUE(field$is_primary_key)) " NOT NULL" else ""
-
-    columnLines <- c(
-      columnLines,
-      sprintf("%s %s%s", quoteIdent(colName), colType, notNull)
-    )
+    columnLines <- c(columnLines, sprintf("  %s %s%s", colName, colType, notNull))
 
     if (isTRUE(field$is_primary_key)) {
-      pkFields <- c(pkFields, quoteIdent(colName))
+      pkFields <- c(pkFields, colName)
     }
 
     if (!is.null(field$references) && nzchar(field$references)) {
@@ -102,37 +108,164 @@ buildCreateTableSql <- function(tableDef, availableTables) {
         refTable <- parts[[1]]
         refCol <- parts[[2]]
         if (refTable %in% availableTables) {
-          fkLines <- c(
-            fkLines,
-            sprintf(
-              "FOREIGN KEY (%s) REFERENCES %s (%s)",
-              quoteIdent(colName),
-              quoteIdent(refTable),
-              quoteIdent(refCol)
-            )
-          )
+          constraintName <- sprintf("fk_%s_%s", tableName, colName)
+          fkLines <- c(fkLines, sprintf(
+            "  CONSTRAINT %s FOREIGN KEY (%s) REFERENCES @database_schema.%s (%s)",
+            constraintName, colName, refTable, refCol
+          ))
         }
       }
     }
   }
 
-  constraints <- character(0)
+  constraintLines <- character(0)
   if (length(pkFields) > 0) {
-    constraints <- c(constraints, sprintf("PRIMARY KEY (%s)", paste(pkFields, collapse = ", ")))
+    constraintLines <- c(constraintLines, sprintf(
+      "  CONSTRAINT pk_%s PRIMARY KEY (%s)",
+      tableName, paste(pkFields, collapse = ", ")
+    ))
   }
-  if (length(fkLines) > 0) {
-    constraints <- c(constraints, fkLines)
-  }
+  constraintLines <- c(constraintLines, fkLines)
 
-  allLines <- c(columnLines, constraints)
+  allLines <- c(columnLines, constraintLines)
 
   sprintf(
-    "CREATE TABLE IF NOT EXISTS %s (\n  %s\n);",
-    quoteIdent(tableDef$name),
-    paste(allLines, collapse = ",\n  ")
+    "CREATE TABLE @database_schema.%s (\n%s\n);",
+    tableName,
+    paste(allLines, collapse = ",\n")
   )
 }
 
+#' Convert a module YAML definition to OHDSI SQL CREATE TABLE statements
+#'
+#' Reads a HADES module definition (file path or parsed list) and produces
+#' OHDSI SQL `CREATE TABLE` statements parameterized with `@database_schema`.
+#' Render the returned SQL with `SqlRender::render(sql, database_schema = "mySchema")`
+#' before execution.
+#'
+#' @param definition Either a path to a `definition.yaml` file or a list as
+#'   returned by `yaml::read_yaml()`.
+#' @param databaseSchema Schema parameter to embed. Defaults to the literal
+#'   `"@database_schema"` for deferred rendering via `SqlRender::render()`.
+#' @param additionalTables Character vector of table names from other modules
+#'   that may appear in foreign-key references. Defaults to the two standard
+#'   cross-module tables.
+#'
+#' @return A single character string of OHDSI SQL `CREATE TABLE` statements.
+#' @export
+yamlDefinitionToSql <- function(
+  definition,
+  databaseSchema = "@database_schema",
+  additionalTables = c("cg_cohort_definition", "database_meta_data")
+) {
+  if (is.character(definition)) {
+    if (!file.exists(definition)) stop(sprintf("Definition file not found: %s", definition))
+    definition <- yaml::read_yaml(definition)
+  }
+
+  ownTables <- vapply(definition$tables, function(t) t$name, character(1))
+  availableTables <- unique(c(additionalTables, ownTables))
+
+  sqlParts <- character(0)
+  for (tbl in definition$tables) {
+    sqlParts <- c(sqlParts, buildOhdsiCreateTableSql(tbl, availableTables))
+  }
+
+  sql <- paste(sqlParts, collapse = "\n\n")
+
+  if (!identical(databaseSchema, "@database_schema")) {
+    sql <- SqlRender::render(sql, database_schema = databaseSchema)
+  }
+
+  sql
+}
+
+#' Generate OHDSI SQL DDL for one or all HADES modules
+#'
+#' Produces OHDSI SQL `CREATE TABLE` statements for the specified module(s) at
+#' the chosen version, or for every module when `module` is `NULL`. The SQL is
+#' parameterized with `@database_schema` and can be rendered with
+#' `SqlRender::render(sql, database_schema = "mySchema")`.
+#'
+#' @param module Character vector of module name(s) (e.g.\ `"CohortMethod"`),
+#'   or `NULL` (default) to include all modules found under `modulesRoot`.
+#' @param version Version string such as `"v1.0.0"` or `"1.0.0"`, or
+#'   `"latest"` (default) to select the highest semantic version for each module.
+#' @param modulesRoot Path to the package modules directory.
+#' @param databaseSchema Schema parameter to embed. Defaults to
+#'   `"@database_schema"` for deferred rendering.
+#'
+#' @return A character string of OHDSI SQL `CREATE TABLE` statements.
+#' @export
+generateModuleDdl <- function(
+  module = NULL,
+  version = "latest",
+  modulesRoot = resolvePackageDir("modules"),
+  databaseSchema = "@database_schema"
+) {
+  if (is.null(module)) {
+    moduleDirs <- list.dirs(modulesRoot, recursive = FALSE, full.names = TRUE)
+    if (length(moduleDirs) == 0) stop("No module directories found under: ", modulesRoot)
+  } else {
+    moduleDirs <- file.path(modulesRoot, module)
+    missing <- !dir.exists(moduleDirs)
+    if (any(missing)) {
+      stop(sprintf(
+        "Module director%s not found: %s",
+        if (sum(missing) == 1L) "y" else "ies",
+        paste(moduleDirs[missing], collapse = ", ")
+      ))
+    }
+  }
+
+  # Load all definitions first so FK resolution spans all requested modules.
+  defs <- lapply(moduleDirs, function(modDir) {
+    ver <- resolveVersion(version, modDir)
+    defFile <- file.path(modDir, ver, "definition.yaml")
+    if (!file.exists(defFile)) stop(sprintf("Definition file not found: %s", defFile))
+    yaml::read_yaml(defFile)
+  })
+
+  allTableNames <- unique(c(
+    "cg_cohort_definition", "database_meta_data",
+    unlist(lapply(defs, function(d) vapply(d$tables, function(t) t$name, character(1))))
+  ))
+
+  # Build ordered list of all tables with their definitions.
+  orderedTables <- list()
+  for (def in defs) {
+    for (tbl in def$tables) {
+      orderedTables[[length(orderedTables) + 1]] <- list(module = def$module, table = tbl)
+    }
+  }
+
+  # Sort by priority (dependency order): cg_cohort_definition, database_meta_data, then by module/name.
+  priority <- function(table_name) {
+    if (identical(table_name, "cg_cohort_definition")) return(1L)
+    if (identical(table_name, "database_meta_data")) return(2L)
+    3L
+  }
+
+  tableNames <- vapply(orderedTables, function(x) x$table$name, character(1))
+  moduleNamesForTables <- vapply(orderedTables, function(x) x$module, character(1))
+  ordering <- order(vapply(tableNames, priority, integer(1)), moduleNamesForTables, tableNames)
+  orderedTables <- orderedTables[ordering]
+
+  sqlParts <- character(0)
+  for (entry in orderedTables) {
+    sqlParts <- c(sqlParts, buildOhdsiCreateTableSql(entry$table, allTableNames))
+  }
+
+  sql <- paste(sqlParts, collapse = "\n\n")
+
+  if (!identical(databaseSchema, "@database_schema")) {
+    sql <- SqlRender::render(sql, database_schema = databaseSchema)
+  }
+
+  sql
+}
+
+# Internal: build OHDSI SQL DDL text lines for a full release manifest.
 .generateReleaseDdlText <- function(manifest, releaseFile, modulesRoot) {
   moduleNames <- names(manifest$modules)
   if (is.null(moduleNames) || any(!nzchar(moduleNames))) {
@@ -149,13 +282,10 @@ buildCreateTableSql <- function(tableDef, availableTables) {
     moduleDefs[[length(moduleDefs) + 1]] <- yaml::read_yaml(defFile)
   }
 
-  availableTables <- c("cg_cohort_definition", "database_meta_data")
-  for (mod in moduleDefs) {
-    for (tbl in mod$tables) {
-      availableTables <- c(availableTables, tbl$name)
-    }
-  }
-  availableTables <- unique(availableTables)
+  availableTables <- unique(c(
+    "cg_cohort_definition", "database_meta_data",
+    unlist(lapply(moduleDefs, function(m) vapply(m$tables, function(t) t$name, character(1))))
+  ))
 
   ddlLines <- c(
     sprintf("-- HADES ecosystem release: %s", manifest$release_version),
@@ -164,13 +294,9 @@ buildCreateTableSql <- function(tableDef, availableTables) {
   )
 
   orderedTables <- list()
-
   for (mod in moduleDefs) {
     for (tbl in mod$tables) {
-      orderedTables[[length(orderedTables) + 1]] <- list(
-        module = mod$module,
-        table = tbl
-      )
+      orderedTables[[length(orderedTables) + 1]] <- list(module = mod$module, table = tbl)
     }
   }
 
@@ -191,7 +317,7 @@ buildCreateTableSql <- function(tableDef, availableTables) {
       currentModule <- entry$module
       ddlLines <- c(ddlLines, sprintf("-- Module: %s", currentModule))
     }
-    ddlLines <- c(ddlLines, buildCreateTableSql(entry$table, availableTables), "")
+    ddlLines <- c(ddlLines, buildOhdsiCreateTableSql(entry$table, availableTables), "")
   }
 
   ddlLines
@@ -221,17 +347,17 @@ applyMigrationSql <- function(connection, migrationFile, databaseSchema = "main"
 
 #' Generate release-level CREATE TABLE DDL from a release manifest
 #'
-#' Builds SQL DDL for all tables in the selected release manifest and writes the
-#' resulting SQL script to disk.
+#' Builds OHDSI SQL DDL for all tables in the selected release manifest and
+#' writes the resulting SQL script to disk. This is a maintainer utility;
+#' use [generateModuleDdl()] for programmatic DDL generation.
 #'
-#' @param releaseFile Optional path to a release manifest YAML file. When `NULL`,
-#' the latest manifest in `releasesRoot` is used.
+#' @param releaseFile Optional path to a release manifest YAML file. When
+#'   `NULL`, the latest manifest in `releasesRoot` is used.
 #' @param modulesRoot Path to the modules root directory.
 #' @param releasesRoot Path to the releases directory containing manifests.
 #' @param sqlRoot Output directory for generated SQL files.
 #'
 #' @return The full path to the generated SQL file.
-#' @export
 generateReleaseDdl <- function(
   releaseFile = NULL,
   modulesRoot = resolvePackageDir("modules"),

@@ -51,7 +51,6 @@ resolvePackageDir <- function(component) {
 #' @param releaseDate Date used to derive release version (`vYYYY_QN`).
 #'
 #' @return The full path to the generated release manifest YAML file.
-#' @export
 buildLatestRelease <- function(
   modulesRoot = resolvePackageDir("modules"),
   releasesRoot = resolvePackageDir("releases"),
