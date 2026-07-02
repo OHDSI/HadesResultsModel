@@ -420,3 +420,274 @@ test_that("Every version after the first has a migration script that transforms 
     info = "No module versions with prior versions were found to test migrations"
   )
 })
+
+# ---------------------------------------------------------------------------
+# Helpers shared by the migration tests
+# ---------------------------------------------------------------------------
+
+# Build all tables for a module definition using DatabaseConnector.
+createModuleTables <- function(con, moduleDef, availableTables) {
+  for (tbl in moduleDef$tables) {
+    ddl <- buildCreateTableSql(tbl, availableTables)
+    DatabaseConnector::executeSql(con, ddl, progressBar = FALSE, reportOverallTime = FALSE)
+  }
+}
+
+# Collect every table name from a list of module definitions.
+allDefTableNames <- function(moduleDefs) {
+  nms <- character(0)
+  for (md in moduleDefs) {
+    for (tbl in md$tables) {
+      nms <- c(nms, tbl$name)
+    }
+  }
+  unique(nms)
+}
+
+# Retrieve a package-internal function regardless of whether the package was
+# loaded via devtools/R CMD check or the R source files were sourced directly.
+getInternalFn <- function(fnName) {
+  if (isNamespaceLoaded("HadesResultsModel")) {
+    get(fnName, envir = asNamespace("HadesResultsModel"), inherits = FALSE)
+  } else if (exists(fnName, envir = .GlobalEnv, inherits = FALSE)) {
+    get(fnName, envir = .GlobalEnv, inherits = FALSE)
+  } else {
+    stop(sprintf("'%s' not found in package namespace or global environment", fnName))
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Test: fingerprinting identifies CohortGenerator v0.1.0 correctly
+# ---------------------------------------------------------------------------
+test_that("inferCurrentVersions fingerprints CohortGenerator v0.1.0 correctly", {
+  skip_if_not(dir.exists(modules_path), "modules/ directory not found")
+  skip_if_not(requireNamespace("DatabaseConnector", quietly = TRUE), "DatabaseConnector not available")
+
+  cg_v010_file <- findPkgPath("modules", "CohortGenerator", "v0.1.0", "definition.yaml")
+  skip_if_not(file.exists(cg_v010_file), "CohortGenerator v0.1.0 definition not found")
+
+  db_meta_file <- findPkgPath("modules", "DatabaseMetaData", "v1.0.0", "definition.yaml")
+  skip_if_not(file.exists(db_meta_file), "DatabaseMetaData v1.0.0 definition not found")
+
+  cg_v010_def <- yaml::read_yaml(cg_v010_file)
+  db_meta_def <- yaml::read_yaml(db_meta_file)
+
+  all_tbls <- unique(c(allDefTableNames(list(db_meta_def)), allDefTableNames(list(cg_v010_def))))
+
+  db_file <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(c(db_file, paste0(db_file, ".wal"))), add = TRUE)
+
+  connectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms   = "duckdb",
+    server = db_file
+  )
+
+  con <- suppressMessages(DatabaseConnector::connect(connectionDetails))
+  on.exit(DatabaseConnector::disconnect(con), add = TRUE)
+
+  # Create DatabaseMetaData first (provides database_meta_data with all columns).
+  createModuleTables(con, db_meta_def, all_tbls)
+  # Create CohortGenerator v0.1.0 tables (full column set, no stubs).
+  createModuleTables(con, cg_v010_def, all_tbls)
+
+  inferFn  <- getInternalFn("inferCurrentVersions")
+  detected <- inferFn(con, "main", modules_path)
+
+  expect_equal(
+    detected[["CohortGenerator"]],
+    "0.1.0",
+    info = "CohortGenerator should be fingerprinted as 0.1.0"
+  )
+  expect_equal(
+    detected[["DatabaseMetaData"]],
+    "1.0.0",
+    info = "DatabaseMetaData should be fingerprinted as 1.0.0"
+  )
+
+  # Modules with no tables present must report 0.0.0.
+  absent <- setdiff(names(detected), c("CohortGenerator", "DatabaseMetaData"))
+  for (mod in absent) {
+    expect_equal(
+      detected[[mod]], "0.0.0",
+      info = sprintf("%s has no tables and should be 0.0.0", mod)
+    )
+  }
+})
+
+# ---------------------------------------------------------------------------
+# Test: end-to-end migration from v0.1.0 to v1.0.0 for CohortGenerator
+# ---------------------------------------------------------------------------
+test_that("migrateResultsModel upgrades CohortGenerator from v0.1.0 to v1.0.0 via fingerprinting", {
+  skip_if_not(dir.exists(modules_path), "modules/ directory not found")
+  skip_if_not(dir.exists(releases_path), "releases/ directory not found")
+  skip_if_not(requireNamespace("DatabaseConnector", quietly = TRUE), "DatabaseConnector not available")
+
+  # ---- Load definitions --------------------------------------------------
+  cg_v010_file <- findPkgPath("modules", "CohortGenerator", "v0.1.0", "definition.yaml")
+  skip_if_not(file.exists(cg_v010_file), "CohortGenerator v0.1.0 definition not found")
+  cg_v010_def <- yaml::read_yaml(cg_v010_file)
+
+  cg_v100_file <- findPkgPath("modules", "CohortGenerator", "v1.0.0", "definition.yaml")
+  skip_if_not(file.exists(cg_v100_file), "CohortGenerator v1.0.0 definition not found")
+  cg_v100_def <- yaml::read_yaml(cg_v100_file)
+
+  db_meta_file <- findPkgPath("modules", "DatabaseMetaData", "v1.0.0", "definition.yaml")
+  skip_if_not(file.exists(db_meta_file), "DatabaseMetaData v1.0.0 definition not found")
+  db_meta_def <- yaml::read_yaml(db_meta_file)
+
+  # Load all remaining modules at their latest version.
+  remaining_defs <- list()
+  for (mdir in list.dirs(modules_path, recursive = FALSE, full.names = TRUE)) {
+    mname <- basename(mdir)
+    if (mname %in% c("CohortGenerator", "DatabaseMetaData")) next
+    versions <- listModuleVersions(mdir)
+    if (length(versions) == 0) next
+    def_file <- file.path(mdir, versions[[length(versions)]], "definition.yaml")
+    if (!file.exists(def_file)) next
+    remaining_defs[[length(remaining_defs) + 1L]] <- yaml::read_yaml(def_file)
+  }
+
+  # ---- Full FK-resolution table name universe ----------------------------
+  all_tbls <- unique(c(
+    allDefTableNames(list(db_meta_def)),
+    allDefTableNames(list(cg_v010_def)),
+    allDefTableNames(remaining_defs)
+  ))
+
+  # ---- Temp DuckDB file shared across connection lifecycle ---------------
+  db_file <- tempfile(fileext = ".duckdb")
+  on.exit(unlink(c(db_file, paste0(db_file, ".wal"))), add = TRUE)
+
+  connectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms   = "duckdb",
+    server = db_file
+  )
+
+  # ---- Setup phase: create pre-migration schema --------------------------
+  con <- suppressMessages(DatabaseConnector::connect(connectionDetails))
+
+  # 1. DatabaseMetaData first — no external FKs, provides database_meta_data.
+  createModuleTables(con, db_meta_def, all_tbls)
+
+  # 2. CohortGenerator at v0.1.0 — provides cg_cohort_definition.
+  #    This intentionally OMITS the three v1.0.0-only tables.
+  createModuleTables(con, cg_v010_def, all_tbls)
+
+  # 3. All remaining modules at their latest (v1.0.0).
+  for (mdef in remaining_defs) {
+    for (tbl in mdef$tables) {
+      if (tbl$name %in% c("cg_cohort_definition", "database_meta_data")) next
+      exec_ok  <- TRUE
+      exec_err <- ""
+      tryCatch(
+        DatabaseConnector::executeSql(
+          con, buildCreateTableSql(tbl, all_tbls),
+          progressBar = FALSE, reportOverallTime = FALSE
+        ),
+        error = function(e) {
+          exec_ok  <<- FALSE
+          exec_err <<- conditionMessage(e)
+        }
+      )
+      expect_true(exec_ok,
+        info = paste("Pre-migration table creation failed for", tbl$name, exec_err))
+    }
+  }
+
+  # ---- Baseline checks ---------------------------------------------------
+  pre_tables <- tolower(DatabaseConnector::getTableNames(con, databaseSchema = "main"))
+
+  expect_false("hades_result_version" %in% pre_tables,
+    info = "Registry must not exist before migrateResultsModel is called")
+
+  v1_only <- c("cg_cohort_attrition", "cg_cohort_subset_attrition", "cg_cohort_subset_operator")
+  for (tbl in v1_only) {
+    expect_false(tbl %in% pre_tables, info = paste(tbl, "must not exist before migration"))
+  }
+
+  # Must disconnect before migrateResultsModel opens its own connection.
+  DatabaseConnector::disconnect(con)
+
+  # ---- Migration phase ----------------------------------------------------
+  final_versions <- migrateResultsModel(
+    connectionDetails,
+    databaseSchema = "main",
+    targetRelease  = "latest",
+    modulesRoot    = modules_path,
+    releasesRoot   = releases_path
+  )
+
+  # ---- Verification phase -------------------------------------------------
+  con <- suppressMessages(DatabaseConnector::connect(connectionDetails))
+  on.exit(DatabaseConnector::disconnect(con), add = TRUE)
+
+  # (1) Registry table was created.
+  post_tables <- tolower(DatabaseConnector::getTableNames(con, databaseSchema = "main"))
+  expect_true("hades_result_version" %in% post_tables,
+    info = "hades_result_version registry must exist after migration")
+
+  # (2) Registry: CohortGenerator upgraded to 1.0.0.
+  #     The fact migration ran proves fingerprinting identified CohortGenerator
+  #     as v0.1.0 (< target v1.0.0) before the upgrade.
+  registry <- DatabaseConnector::renderTranslateQuerySql(
+    con,
+    sql = "SELECT module_name, version FROM @database_schema.hades_result_version;",
+    database_schema      = "main",
+    snakeCaseToCamelCase = FALSE
+  )
+  names(registry) <- tolower(names(registry))
+  cg_row <- registry[registry$module_name == "CohortGenerator", ]
+  expect_equal(nrow(cg_row), 1L, info = "CohortGenerator must have exactly one registry row")
+  expect_equal(cg_row$version, "1.0.0",
+    info = "CohortGenerator registry version must be 1.0.0 after migration")
+
+  # (3) Migration SQL was applied: v1.0.0-only tables now exist.
+  for (tbl in v1_only) {
+    expect_true(tbl %in% post_tables,
+      info = paste(tbl, "must exist after CohortGenerator migration"))
+  }
+
+  # (4) Final structure matches CohortGenerator v1.0.0 definition.
+  for (tbl in cg_v100_def$tables) {
+    expected_cols <- tolower(vapply(tbl$fields, function(f) f$name, character(1)))
+    col_result    <- DatabaseConnector::renderTranslateQuerySql(
+      con,
+      sql = "SELECT TOP 1 * FROM @database_schema.@table_name;",
+      database_schema      = "main",
+      table_name           = tbl$name,
+      snakeCaseToCamelCase = FALSE
+    )
+    actual_cols <- tolower(colnames(col_result))
+    expect_true(
+      all(expected_cols %in% actual_cols),
+      info = sprintf(
+        "Table %s is missing columns after migration: %s",
+        tbl$name,
+        paste(setdiff(expected_cols, actual_cols), collapse = ", ")
+      )
+    )
+  }
+
+  # (5) Return value reflects final state.
+  expect_equal(final_versions[["CohortGenerator"]], "1.0.0",
+    info = "Return value must show CohortGenerator at 1.0.0")
+
+  # (6) Migration is idempotent (second call makes no changes).
+  idempotent_ok  <- TRUE
+  idempotent_err <- ""
+  tryCatch(
+    migrateResultsModel(
+      connectionDetails,
+      databaseSchema = "main",
+      targetRelease  = "latest",
+      modulesRoot    = modules_path,
+      releasesRoot   = releases_path
+    ),
+    error = function(e) {
+      idempotent_ok  <<- FALSE
+      idempotent_err <<- conditionMessage(e)
+    }
+  )
+  expect_true(idempotent_ok,
+    info = paste("Second migrateResultsModel call must be a no-op:", idempotent_err))
+})

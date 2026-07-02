@@ -11,10 +11,11 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     yaml,
-    DBI
+    DBI,
+    SqlRender,
+    DatabaseConnector
 Suggests:
     testthat,
-    SqlRender,
     jsonlite,
     jsonvalidate,
     duckdb
