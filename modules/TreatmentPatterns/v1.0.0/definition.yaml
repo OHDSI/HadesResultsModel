@@ -1,0 +1,362 @@
+module: TreatmentPatterns
+prefix: tp_
+tables:
+- name: tp_analyses
+  description: Results data table tp_analyses.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier
+    is_primary_key: yes
+  - name: description
+    type: varchar
+    description: Analysis description
+    is_primary_key: no
+- name: tp_arguments
+  description: Results data table tp_arguments.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier
+    is_primary_key: yes
+  - name: arguments
+    type: varchar
+    description: Arguments as JSON
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: tp_attrition
+  description: Results data table tp_attrition.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: number_records
+    type: int
+    description: Number of records
+    is_primary_key: no
+  - name: number_subjects
+    type: int
+    description: Number of subjects
+    is_primary_key: no
+  - name: reason
+    type: varchar
+    description: Reason description
+    is_primary_key: yes
+  - name: reason_id
+    type: int
+    description: Reason Identifier
+    is_primary_key: no
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+  - name: time_stamp
+    type: bigint
+    description: Time stamp in seconds since epoch (1970-01-01)
+    is_primary_key: no
+- name: tp_cdm_source_info
+  description: Results data table tp_cdm_source_info.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: cdm_etl_reference
+    type: varchar
+    description: CDM ETL Reference
+    is_primary_key: no
+  - name: cdm_holder
+    type: varchar
+    description: Cdm holder (documented from legacy CSV model).
+    is_primary_key: no
+  - name: cdm_release_date
+    type: date
+    description: CDM release date
+    is_primary_key: no
+  - name: cdm_source_abbreviation
+    type: varchar
+    description: CDM Source Abbreviation
+    is_primary_key: no
+  - name: cdm_source_name
+    type: varchar
+    description: CDM Source Name
+    is_primary_key: no
+  - name: cdm_version
+    type: varchar
+    description: CDM version (documented from legacy CSV model).
+    is_primary_key: no
+  - name: cdm_version_concept_id
+    type: int
+    description: The Concept Id representing the version of the CDM.
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: source_description
+    type: varchar
+    description: Source description
+    is_primary_key: no
+  - name: source_documentation_reference
+    type: varchar
+    description: Source Documentation Reference
+    is_primary_key: no
+  - name: source_release_date
+    type: date
+    description: Source release date
+    is_primary_key: no
+  - name: vocabulary_version
+    type: varchar
+    description: Vocabulary version
+    is_primary_key: no
+- name: tp_counts_age
+  description: Results data table tp_counts_age.
+  fields:
+  - name: age
+    type: int
+    description: Age in years
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: 'n'
+    type: varchar
+    description: Count per age. May be <x
+    is_primary_key: no
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+- name: tp_counts_sex
+  description: Results data table tp_counts_sex.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: 'n'
+    type: varchar
+    description: Count per sex. May be <x
+    is_primary_key: no
+  - name: sex
+    type: varchar
+    description: Sex group (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+- name: tp_counts_year
+  description: Results data table tp_counts_year.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: 'n'
+    type: varchar
+    description: Count per year. May be <x
+    is_primary_key: no
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+  - name: index_year
+    type: int
+    description: Calendar year
+    is_primary_key: yes
+- name: tp_metadata
+  description: Results data table tp_metadata.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: execution_end
+    type: bigint
+    description: Time stamp in seconds since epoch (1970-01-01)
+    is_primary_key: no
+  - name: execution_start
+    type: bigint
+    description: Time stamp in seconds since epoch (1970-01-01)
+    is_primary_key: no
+  - name: package_version
+    type: varchar
+    description: TreatmentPatterns version
+    is_primary_key: no
+  - name: platform
+    type: varchar
+    description: 'Platform (Example: x86_64-w64-mingw32)'
+    is_primary_key: no
+  - name: r_version
+    type: varchar
+    description: R version (documented from legacy CSV model).
+    is_primary_key: no
+- name: tp_summary_event_duration
+  description: Results data table tp_summary_event_duration.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: duration_average
+    type: float
+    description: Average duration in days
+    is_primary_key: no
+  - name: event_count
+    type: int
+    description: Count of (combination) event
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: event_name
+    type: varchar
+    description: Name of (combination) event
+    is_primary_key: yes
+  - name: line
+    type: varchar
+    description: Position in pathway. I.e. 1 equals the first event in a pathway.
+      2 the second etc. Overall indicates across the entire pathway
+    is_primary_key: yes
+  - name: duration_max
+    type: int
+    description: Maximum duration in days
+    is_primary_key: no
+  - name: duration_median
+    type: int
+    description: Median duration in days
+    is_primary_key: no
+  - name: duration_min
+    type: int
+    description: Minimum duration in days
+    is_primary_key: no
+  - name: duration_q_1
+    type: int
+    description: Q1 duration in days
+    is_primary_key: no
+  - name: duration_q_2
+    type: int
+    description: Q2 duration in days
+    is_primary_key: no
+  - name: duration_sd
+    type: float
+    description: Standard Deviation of duration in days
+    is_primary_key: no
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+- name: tp_treatment_pathways
+  description: Results data table tp_treatment_pathways.
+  fields:
+  - name: age
+    type: varchar
+    description: Age stratum (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: Analysis identifier foreign key
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: freq
+    type: int
+    description: Count of pathway
+    is_primary_key: no
+  - name: index_year
+    type: varchar
+    description: Target index year stratum
+    is_primary_key: yes
+  - name: pathway
+    type: varchar
+    description: Pathway (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: sex
+    type: varchar
+    description: Sex stratum (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: int
+    description: Target cohort ID
+    is_primary_key: yes
+  - name: target_cohort_name
+    type: varchar
+    description: Target cohort name
+    is_primary_key: no
+- name: tp_analysis_cohorts
+  description: Results data table tp_analysis_cohorts.
+  fields:
+  - name: cohort_id
+    type: int
+    description: Cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: cohort_name
+    type: varchar
+    description: Cohort name (documented from legacy CSV model).
+    is_primary_key: no
+  - name: type
+    type: varchar
+    description: Cohort type (target, event, exit)
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: Analysis Id (documented from legacy CSV model).
+    is_primary_key: yes

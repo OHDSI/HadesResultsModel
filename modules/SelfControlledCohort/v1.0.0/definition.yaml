@@ -1,0 +1,217 @@
+module: SelfControlledCohort
+prefix: scc_
+tables:
+- name: scc_analysis_setting
+  description: Results data table scc_analysis_setting.
+  fields:
+  - name: analysis_id
+    type: int
+    description: Unique identifier for the analysis setting
+    is_primary_key: yes
+  - name: description
+    type: varchar
+    description: Description of the analysis
+    is_primary_key: no
+  - name: settings
+    type: varchar
+    description: Settings related to the analysis
+    is_primary_key: no
+- name: scc_result
+  description: Results data table scc_result.
+  fields:
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: analysis_id
+    type: int
+    description: Identifier for the associated analysis
+    is_primary_key: yes
+  - name: outcome_cohort_id
+    type: bigint
+    description: Identifier for the outcome cohort
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: bigint
+    description: Identifier for the target cohort
+    is_primary_key: yes
+  - name: rr
+    type: float
+    description: Relative risk calculated from the study
+    is_primary_key: no
+  - name: se_log_rr
+    type: float
+    description: Standard error of the log relative risk
+    is_primary_key: no
+  - name: lb_95
+    type: float
+    description: Lower bound of the 95% confidence interval
+    is_primary_key: no
+  - name: ub_95
+    type: float
+    description: Upper bound of the 95% confidence interval
+    is_primary_key: no
+  - name: p_value
+    type: float
+    description: P-value indicating statistical significance
+    is_primary_key: no
+  - name: calibrated_rr
+    type: float
+    description: Calibrated relative risk
+    is_primary_key: no
+  - name: calibrated_se_log_rr
+    type: float
+    description: Standard error of the calibrated log relative risk
+    is_primary_key: no
+  - name: calibrated_lb_95
+    type: float
+    description: Lower bound of the 95% confidence interval for calibrated results
+    is_primary_key: no
+  - name: calibrated_ub_95
+    type: float
+    description: Upper bound of the 95% confidence interval for calibrated results
+    is_primary_key: no
+  - name: calibrated_p_value
+    type: float
+    description: P-value for calibrated results
+    is_primary_key: no
+  - name: num_persons
+    type: float
+    description: person count
+    is_primary_key: no
+  - name: time_at_risk_exposed
+    type: float
+    description: Time at risk exposed
+    is_primary_key: no
+  - name: time_at_risk_unexposed
+    type: float
+    description: Time at risk unexposed
+    is_primary_key: no
+  - name: num_outcomes_exposed
+    type: float
+    description: Cases while exposed
+    is_primary_key: no
+  - name: num_outcomes_unexposed
+    type: float
+    description: Cases while unexposed
+    is_primary_key: no
+  - name: num_exposures
+    type: float
+    description: Number of exposures
+    is_primary_key: no
+  - name: i2
+    type: float
+    description: I^2 statsitic. Used in meta-analytic results only
+    is_primary_key: no
+- name: scc_stat
+  description: Results data table scc_stat.
+  fields:
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: analysis_id
+    type: int
+    description: Identifier for the associated analysis
+    is_primary_key: yes
+  - name: outcome_cohort_id
+    type: bigint
+    description: Identifier for the outcome cohort
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: bigint
+    description: Identifier for the target cohort
+    is_primary_key: yes
+  - name: stat_type
+    type: varchar
+    description: Type of statistical measure
+    is_primary_key: no
+  - name: mean
+    type: float
+    description: Mean value of the statistic
+    is_primary_key: no
+  - name: sd
+    type: float
+    description: Standard deviation of the statistic
+    is_primary_key: no
+  - name: minimum
+    type: float
+    description: Minimum value in the dataset
+    is_primary_key: no
+  - name: p10
+    type: float
+    description: 10th percentile value
+    is_primary_key: no
+  - name: p25
+    type: float
+    description: 25th percentile value
+    is_primary_key: no
+  - name: median
+    type: float
+    description: Median value
+    is_primary_key: no
+  - name: p75
+    type: float
+    description: 75th percentile value
+    is_primary_key: no
+  - name: p90
+    type: float
+    description: 90th percentile value
+    is_primary_key: no
+  - name: maximum
+    type: float
+    description: Maximum value in the dataset
+    is_primary_key: no
+  - name: total
+    type: float
+    description: Total count or total value of the statistic
+    is_primary_key: no
+- name: scc_diagnostics_summary
+  description: Results data table scc_diagnostics_summary.
+  fields:
+  - name: database_id
+    type: varchar
+    description: Unique identifier for the database
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: analysis_id
+    type: int
+    description: Identifier for the associated analysis
+    is_primary_key: yes
+  - name: outcome_cohort_id
+    type: bigint
+    description: Identifier for the outcome cohort
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: bigint
+    description: Identifier for the target cohort
+    is_primary_key: yes
+  - name: diagnostic_name
+    type: varchar
+    description: Name of the diagnostic test
+    is_primary_key: yes
+  - name: diagnostic_value
+    type: float
+    description: Value associated with the diagnostic test
+    is_primary_key: no
+  - name: pass
+    type: int
+    description: Indicator of whether the diagnostic test passed
+    is_primary_key: no
+- name: scc_outcome_exposure
+  description: Results data table scc_outcome_exposure.
+  fields:
+  - name: outcome_cohort_id
+    type: bigint
+    description: Identifier for the outcome cohort
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: bigint
+    description: Identifier for the target cohort
+    is_primary_key: yes
+  - name: true_effect_size
+    type: float
+    description: Is the outcome/exposure pair a control?
+    is_primary_key: no

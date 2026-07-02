@@ -1,0 +1,915 @@
+module: PatientLevelPrediction
+prefix: plp_
+tables:
+- name: plp_cohorts
+  description: Results data table plp_cohorts.
+  fields:
+  - name: cohort_id
+    type: int
+    description: a unique identifier for the cohort in the plp results database
+    is_primary_key: yes
+  - name: cohort_definition_id
+    type: bigint
+    description: the identifier in ATLAS for the cohort
+    is_primary_key: no
+    references: cg_cohort_definition.cohort_definition_id
+  - name: cohort_name
+    type: varchar
+    description: the name of the cohort
+    is_primary_key: no
+- name: plp_cohort_definition
+  description: Results data table plp_cohort_definition.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The ATLAS cohort definition id
+    is_primary_key: no
+    references: cg_cohort_definition.cohort_definition_id
+  - name: cohort_name
+    type: varchar
+    description: The name of the cohort
+    is_primary_key: no
+  - name: description
+    type: text
+    description: A description of the cohort
+    is_primary_key: no
+  - name: json
+    type: text
+    description: The json spec for the cohort
+    is_primary_key: no
+  - name: sql_command
+    type: text
+    description: The SQL used to create the cohort
+    is_primary_key: no
+- name: plp_database_meta_data
+  description: Results data table plp_database_meta_data.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The shared databaseId
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cdm_source_name
+    type: varchar
+    description: The name of the database
+    is_primary_key: no
+  - name: cdm_source_abbreviation
+    type: varchar
+    description: The abbreviated name of the database
+    is_primary_key: no
+  - name: cdm_holder
+    type: varchar
+    description: The owner of the CDM
+    is_primary_key: no
+  - name: source_description
+    type: text
+    description: The full description of the database
+    is_primary_key: no
+  - name: source_documentation_reference
+    type: varchar
+    description: The link to the documentation
+    is_primary_key: no
+  - name: cdm_etl_reference
+    type: varchar
+    description: The link to the ETL document
+    is_primary_key: no
+  - name: source_release_date
+    type: varchar
+    description: The release date for the data
+    is_primary_key: no
+  - name: cdm_release_date
+    type: varchar
+    description: The release date for the CDM data
+    is_primary_key: no
+  - name: cdm_version
+    type: varchar
+    description: The vocabulary version
+    is_primary_key: no
+  - name: vocabulary_version
+    type: varchar
+    description: The max date in the database
+    is_primary_key: no
+  - name: max_obs_period_end_date
+    type: varchar
+    description: Field max_obs_period_end_date in table plp_database_meta_data.
+    is_primary_key: no
+- name: plp_database_details
+  description: Results data table plp_database_details.
+  fields:
+  - name: database_id
+    type: int
+    description: a unique identifier for the database
+    is_primary_key: yes
+  - name: database_meta_data_id
+    type: varchar
+    description: The shared databaseId
+    is_primary_key: no
+    references: database_meta_data.database_id
+- name: plp_tars
+  description: Results data table plp_tars.
+  fields:
+  - name: tar_id
+    type: int
+    description: a unique identifier for the tar
+    is_primary_key: yes
+  - name: tar_start_day
+    type: int
+    description: the number of days offset the tar_start_anchor for the time-at-risk
+      to start
+    is_primary_key: no
+  - name: tar_start_anchor
+    type: varchar
+    description: whether to use the cohort start or cohort end
+    is_primary_key: no
+  - name: tar_end_day
+    type: int
+    description: the number of days offset the tar_end_anchor for the time-at-risk
+      to end
+    is_primary_key: no
+  - name: tar_end_anchor
+    type: varchar
+    description: whether to use the cohort start or cohort end
+    is_primary_key: no
+- name: plp_population_settings
+  description: Results data table plp_population_settings.
+  fields:
+  - name: population_setting_id
+    type: int
+    description: a unique identifier for the population settings
+    is_primary_key: yes
+  - name: population_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_covariate_settings
+  description: Results data table plp_covariate_settings.
+  fields:
+  - name: covariate_setting_id
+    type: int
+    description: a unique identifier for the covaraite settings
+    is_primary_key: yes
+  - name: covariate_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_model_settings
+  description: Results data table plp_model_settings.
+  fields:
+  - name: model_setting_id
+    type: int
+    description: a unique identifier for the model settings
+    is_primary_key: yes
+  - name: model_type
+    type: varchar
+    description: the type of model
+    is_primary_key: no
+  - name: model_settings_json
+    type: varchar
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_hyperparameter_settings
+  description: Results data table plp_hyperparameter_settings.
+  fields:
+  - name: hyperparameter_setting_id
+    type: int
+    description: a unique identifier for the hyperparameter settings
+    is_primary_key: yes
+  - name: hyperparameter_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_split_settings
+  description: Results data table plp_split_settings.
+  fields:
+  - name: split_setting_id
+    type: int
+    description: a unique identifier for the split settings
+    is_primary_key: yes
+  - name: split_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_data_settings
+  description: Results data table plp_data_settings.
+  fields:
+  - name: plp_data_setting_id
+    type: int
+    description: a unique identifier for the plp data settings
+    is_primary_key: yes
+  - name: plp_data_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_feature_engineering_settings
+  description: Results data table plp_feature_engineering_settings.
+  fields:
+  - name: feature_engineering_setting_id
+    type: int
+    description: a unique identifier for the feature engineering settings
+    is_primary_key: yes
+  - name: feature_engineering_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_tidy_covariates_settings
+  description: Results data table plp_tidy_covariates_settings.
+  fields:
+  - name: tidy_covariates_setting_id
+    type: int
+    description: a unique identifier for the tidy covariates settings
+    is_primary_key: yes
+  - name: tidy_covariates_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_sample_settings
+  description: Results data table plp_sample_settings.
+  fields:
+  - name: sample_setting_id
+    type: int
+    description: a unique identifier for the sample settings
+    is_primary_key: yes
+  - name: sample_settings_json
+    type: text
+    description: the json with the settings
+    is_primary_key: no
+- name: plp_model_designs
+  description: Results data table plp_model_designs.
+  fields:
+  - name: model_design_id
+    type: int
+    description: a unique identifier for the model design settings
+    is_primary_key: yes
+  - name: target_id
+    type: int
+    description: the  identifier for the target cohort id
+    is_primary_key: no
+  - name: outcome_id
+    type: int
+    description: the  identifier for the outcome cohort id
+    is_primary_key: no
+  - name: tar_id
+    type: int
+    description: the  identifier for the time at risk setting
+    is_primary_key: no
+  - name: plp_data_setting_id
+    type: int
+    description: the  identifier for the plp data setting
+    is_primary_key: no
+  - name: population_setting_id
+    type: int
+    description: the  identifier for the population setting
+    is_primary_key: no
+  - name: model_setting_id
+    type: int
+    description: the  identifier for the model setting
+    is_primary_key: no
+  - name: covariate_setting_id
+    type: int
+    description: the  identifier for the covaraite setting
+    is_primary_key: no
+  - name: sample_setting_id
+    type: int
+    description: the  identifier for the sample setting
+    is_primary_key: no
+  - name: split_setting_id
+    type: int
+    description: the  identifier for the split setting
+    is_primary_key: no
+  - name: feature_engineering_setting_id
+    type: int
+    description: the  identifier for the feature engineering setting
+    is_primary_key: no
+  - name: tidy_covariates_setting_id
+    type: int
+    description: the  identifier for the tidy covariate setting
+    is_primary_key: no
+  - name: hyperparameter_setting_id
+    type: int
+    description: the  identifier for the hyperparameter setting
+    is_primary_key: no
+- name: plp_diagnostics
+  description: Results data table plp_diagnostics.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the unique identifier for the diagnostic results
+    is_primary_key: yes
+  - name: model_design_id
+    type: int
+    description: the identifier for the model design
+    is_primary_key: no
+  - name: database_id
+    type: int
+    description: the identifier for the database
+    is_primary_key: no
+  - name: execution_date_time
+    type: varchar
+    description: the date/time the diagnostic was run
+    is_primary_key: no
+- name: plp_diagnostic_summary
+  description: Results data table plp_diagnostic_summary.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the identifier for the diagnostics
+    is_primary_key: no
+  - name: probast_id
+    type: varchar
+    description: the probast id being diagnosed
+    is_primary_key: no
+  - name: result_value
+    type: varchar
+    description: the diagnostic result
+    is_primary_key: no
+- name: plp_diagnostic_predictors
+  description: Results data table plp_diagnostic_predictors.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the identifier for the diagnostics
+    is_primary_key: no
+  - name: days_to_event
+    type: int
+    description: the time between index to the day of interest
+    is_primary_key: no
+  - name: outcome_at_time
+    type: int
+    description: the number of outcomes on the day of interest
+    is_primary_key: no
+  - name: observed_at_start_of_day
+    type: bigint
+    description: the number of people observed up to the day of interest
+    is_primary_key: no
+  - name: input_type
+    type: varchar
+    description: the setting id the results are for
+    is_primary_key: no
+- name: plp_diagnostic_participants
+  description: Results data table plp_diagnostic_participants.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the identifier for the diagnostics
+    is_primary_key: no
+  - name: design
+    type: varchar
+    description: the inclusion criteria of interest
+    is_primary_key: no
+  - name: metric
+    type: varchar
+    description: the metric calculated
+    is_primary_key: no
+  - name: value
+    type: float
+    description: the value calculated
+    is_primary_key: no
+  - name: probast_id
+    type: varchar
+    description: the corresponding probast id
+    is_primary_key: no
+- name: plp_diagnostic_outcomes
+  description: Results data table plp_diagnostic_outcomes.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the identifier for the diagnostics
+    is_primary_key: no
+  - name: xvalue
+    type: int
+    description: the value for the x-axis
+    is_primary_key: no
+  - name: outcome_percent
+    type: float
+    description: the percentage of people with the outcome
+    is_primary_key: no
+  - name: aggregation
+    type: varchar
+    description: the type of aggregation (age,sex, year)
+    is_primary_key: no
+  - name: probast_id
+    type: varchar
+    description: the corresponding probast id
+    is_primary_key: no
+  - name: input_type
+    type: varchar
+    description: the inclusion criteria of interest
+    is_primary_key: no
+- name: plp_diagnostic_designs
+  description: Results data table plp_diagnostic_designs.
+  fields:
+  - name: diagnostic_id
+    type: int
+    description: the identifier for the diagnostics
+    is_primary_key: yes
+  - name: probast_id
+    type: varchar
+    description: not used (documented from legacy CSV model).
+    is_primary_key: no
+  - name: value
+    type: varchar
+    description: not used (documented from legacy CSV model).
+    is_primary_key: no
+- name: plp_models
+  description: Results data table plp_models.
+  fields:
+  - name: model_id
+    type: int
+    description: A unique identifier for the model
+    is_primary_key: yes
+  - name: analysis_id
+    type: varchar
+    description: The analysis id from the model
+    is_primary_key: no
+  - name: model_design_id
+    type: int
+    description: The corresponding model design id
+    is_primary_key: no
+  - name: database_id
+    type: int
+    description: The corresponding database id
+    is_primary_key: no
+  - name: model_type
+    type: varchar
+    description: The type of model
+    is_primary_key: no
+  - name: plp_model_file
+    type: text
+    description: A directory where the model is saved
+    is_primary_key: no
+  - name: train_details
+    type: text
+    description: json containing the training details
+    is_primary_key: no
+  - name: preprocessing
+    type: text
+    description: json containing the preprocessing details
+    is_primary_key: no
+  - name: execution_date_time
+    type: varchar
+    description: the date/time the model was trained
+    is_primary_key: no
+  - name: training_time
+    type: varchar
+    description: the time it took to develop the model
+    is_primary_key: no
+  - name: intercept
+    type: float
+    description: the intercept (if the model is a GLM)
+    is_primary_key: no
+- name: plp_recalibrations
+  description: Results data table plp_recalibrations.
+  fields:
+  - name: recalibration_id
+    type: int
+    description: A unique identifier for the recalibration
+    is_primary_key: yes
+  - name: original_model_id
+    type: int
+    description: The corresponding uncalibrated model id
+    is_primary_key: no
+  - name: recalibrated_model_id
+    type: int
+    description: The model id for the recalibrated model
+    is_primary_key: no
+  - name: recalibration_type
+    type: varchar
+    description: The type of recalibration
+    is_primary_key: no
+  - name: recalibration_json
+    type: varchar
+    description: The recalibration details
+    is_primary_key: no
+- name: plp_performances
+  description: Results data table plp_performances.
+  fields:
+  - name: performance_id
+    type: int
+    description: A unique identifier for the performance
+    is_primary_key: yes
+  - name: model_design_id
+    type: int
+    description: The corresponding model design id for development
+    is_primary_key: no
+  - name: development_database_id
+    type: int
+    description: The corresponding development database is
+    is_primary_key: no
+  - name: validation_database_id
+    type: int
+    description: The corresponding validation database is
+    is_primary_key: no
+  - name: target_id
+    type: int
+    description: The corresponding validation target cohort id
+    is_primary_key: no
+  - name: outcome_id
+    type: int
+    description: The corresponding validation outcome cohort id
+    is_primary_key: no
+  - name: tar_id
+    type: int
+    description: The corresponding validation time at risk id
+    is_primary_key: no
+  - name: plp_data_setting_id
+    type: int
+    description: The corresponding validation data settings id
+    is_primary_key: no
+  - name: population_setting_id
+    type: int
+    description: The corresponding validation population settings id
+    is_primary_key: no
+  - name: model_development
+    type: int
+    description: flag whether the performage is development or validation
+    is_primary_key: no
+  - name: execution_date_time
+    type: varchar
+    description: The date/time the validation was executed
+    is_primary_key: no
+  - name: plp_version
+    type: varchar
+    description: The PLP version for the validation execution
+    is_primary_key: no
+- name: plp_attrition
+  description: Results data table plp_attrition.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: outcome_id
+    type: int
+    description: The corresponding outcome id
+    is_primary_key: no
+  - name: description
+    type: varchar
+    description: A description of the inclusions/exclusion
+    is_primary_key: no
+  - name: target_count
+    type: int
+    description: The number of target patients remaining
+    is_primary_key: no
+  - name: unique_people
+    type: int
+    description: The number of distinct target patients remaining
+    is_primary_key: no
+  - name: outcomes
+    type: int
+    description: The number of target patients with the outcome remaining
+    is_primary_key: no
+- name: plp_prediction_distribution
+  description: Results data table plp_prediction_distribution.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: evaluation
+    type: varchar
+    description: The type of evalaution (test/train/CV)
+    is_primary_key: no
+  - name: class_label
+    type: int
+    description: whether the group is the with outcome or without outcome
+    is_primary_key: no
+  - name: person_count
+    type: int
+    description: the number of patients
+    is_primary_key: no
+  - name: average_predicted_probability
+    type: float
+    description: the mean predicted risk
+    is_primary_key: no
+  - name: st_dev_predicted_probability
+    type: float
+    description: the standard deviation of the predicted risk
+    is_primary_key: no
+  - name: min_predicted_probability
+    type: float
+    description: the min predicted risk
+    is_primary_key: no
+  - name: p_05_predicted_probability
+    type: float
+    description: the 5% quantile of predicted risk
+    is_primary_key: no
+  - name: p_25_predicted_probability
+    type: float
+    description: the 25% quantile of predicted risk
+    is_primary_key: no
+  - name: median_predicted_probability
+    type: float
+    description: The median predicted risk
+    is_primary_key: no
+  - name: p_75_predicted_probability
+    type: float
+    description: the 75% quantile of predicted risk
+    is_primary_key: no
+  - name: p_95_predicted_probability
+    type: float
+    description: the 95% quantile of predicted risk
+    is_primary_key: no
+  - name: max_predicted_probability
+    type: float
+    description: the max predicted risk
+    is_primary_key: no
+- name: plp_covariate_summary
+  description: Results data table plp_covariate_summary.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: covariate_id
+    type: bigint
+    description: The id for the covariate
+    is_primary_key: no
+  - name: covariate_name
+    type: varchar
+    description: the name for the covariate
+    is_primary_key: no
+  - name: concept_id
+    type: float
+    description: the concept id used to construct the covariate
+    is_primary_key: no
+  - name: covariate_value
+    type: float
+    description: the coefficient or covariate importance
+    is_primary_key: no
+  - name: covariate_count
+    type: int
+    description: the number of people with the covariate
+    is_primary_key: no
+  - name: covariate_mean
+    type: float
+    description: the mean value
+    is_primary_key: no
+  - name: covariate_st_dev
+    type: float
+    description: the standard deviation of the values
+    is_primary_key: no
+  - name: with_no_outcome_covariate_count
+    type: int
+    description: the number of people without the outcome with the covariate
+    is_primary_key: no
+  - name: with_no_outcome_covariate_mean
+    type: float
+    description: the mean value for people without the outcome
+    is_primary_key: no
+  - name: with_no_outcome_covariate_st_dev
+    type: float
+    description: the standard deviation of the values for people without the outcome
+    is_primary_key: no
+  - name: with_outcome_covariate_count
+    type: int
+    description: the number of people with the outcome with the covariate
+    is_primary_key: no
+  - name: with_outcome_covariate_mean
+    type: float
+    description: the mean value for people with the outcome
+    is_primary_key: no
+  - name: with_outcome_covariate_st_dev
+    type: float
+    description: the standard deviation of the values for people with the outcome
+    is_primary_key: no
+  - name: standardized_mean_diff
+    type: float
+    description: The standardized mean difference for those with and without the outcome
+    is_primary_key: no
+- name: plp_threshold_summary
+  description: Results data table plp_threshold_summary.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: evaluation
+    type: varchar
+    description: The type of evalaution (test/train/CV)
+    is_primary_key: no
+  - name: prediction_threshold
+    type: float
+    description: The cut-off value being summarised
+    is_primary_key: no
+  - name: preference_threshold
+    type: float
+    description: the preference score of the cut-off value
+    is_primary_key: no
+  - name: positive_count
+    type: int
+    description: the number of patients predicted to have the outcome at the cut-off
+    is_primary_key: no
+  - name: negative_count
+    type: int
+    description: the number of patients predicted to not have the outcome at the cut-off
+    is_primary_key: no
+  - name: true_count
+    type: int
+    description: the number of patients with the outcome
+    is_primary_key: no
+  - name: false_count
+    type: int
+    description: the number of patients without the outcome
+    is_primary_key: no
+  - name: true_positive_count
+    type: int
+    description: the number of patients correctly predicted to have the outcome at
+      the cut-off
+    is_primary_key: no
+  - name: true_negative_count
+    type: int
+    description: the number of patients correctly predicted to not have the outcome
+      at the cut-off
+    is_primary_key: no
+  - name: false_positive_count
+    type: int
+    description: the number of patients incorrectly predicted to have the outcome
+      at the cut-off
+    is_primary_key: no
+  - name: false_negative_count
+    type: int
+    description: the number of patients incorrectly predicted to not have the outcome
+      at the cut-off
+    is_primary_key: no
+  - name: f_1_score
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: accuracy
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: sensitivity
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: false_negative_rate
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: false_positive_rate
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: specificity
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: positive_predictive_value
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: false_discovery_rate
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: negative_predictive_value
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: false_omission_rate
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: positive_likelihood_ratio
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: negative_likelihood_ratio
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+  - name: diagnostic_odds_ratio
+    type: float
+    description: the named metric at the cut-off
+    is_primary_key: no
+- name: plp_calibration_summary
+  description: Results data table plp_calibration_summary.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: evaluation
+    type: varchar
+    description: The type of evalaution (test/train/CV)
+    is_primary_key: no
+  - name: prediction_threshold
+    type: float
+    description: The cut-off value being summarised
+    is_primary_key: no
+  - name: person_count_at_risk
+    type: int
+    description: The number of people in the target population
+    is_primary_key: no
+  - name: person_count_with_outcome
+    type: int
+    description: The number of target patients with the outcome during TAR
+    is_primary_key: no
+  - name: average_predicted_probability
+    type: float
+    description: the mean predicted risk
+    is_primary_key: no
+  - name: st_dev_predicted_probability
+    type: float
+    description: the standard deviation of the predicted risk
+    is_primary_key: no
+  - name: min_predicted_probability
+    type: float
+    description: the min predicted risk
+    is_primary_key: no
+  - name: p_25_predicted_probability
+    type: float
+    description: the 25% quantile of predicted risk
+    is_primary_key: no
+  - name: median_predicted_probability
+    type: float
+    description: The median predicted risk
+    is_primary_key: no
+  - name: p_75_predicted_probability
+    type: float
+    description: the 75% quantile of predicted risk
+    is_primary_key: no
+  - name: max_predicted_probability
+    type: float
+    description: the max predicted risk
+    is_primary_key: no
+  - name: observed_incidence
+    type: float
+    description: The true incidence (outcome %)
+    is_primary_key: no
+- name: plp_evaluation_statistics
+  description: Results data table plp_evaluation_statistics.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: evaluation
+    type: varchar
+    description: The type of evalaution (test/train/CV)
+    is_primary_key: no
+  - name: metric
+    type: varchar
+    description: The metric of interest
+    is_primary_key: no
+  - name: value
+    type: float
+    description: The value for the metric of interest
+    is_primary_key: no
+- name: plp_demographic_summary
+  description: Results data table plp_demographic_summary.
+  fields:
+  - name: performance_id
+    type: int
+    description: The corresponding performance id
+    is_primary_key: no
+  - name: evaluation
+    type: varchar
+    description: The type of evalaution (test/train/CV)
+    is_primary_key: no
+  - name: age_group
+    type: varchar
+    description: The age group of interest
+    is_primary_key: no
+  - name: gen_group
+    type: varchar
+    description: The gender of interest
+    is_primary_key: no
+  - name: person_count_at_risk
+    type: int
+    description: The number of target patients with the age/gender of interest
+    is_primary_key: no
+  - name: person_count_with_outcome
+    type: int
+    description: The number of target patients with the age/gender of interest who
+      also have the outcome during TAR
+    is_primary_key: no
+  - name: average_predicted_probability
+    type: float
+    description: the mean predicted risk
+    is_primary_key: no
+  - name: st_dev_predicted_probability
+    type: float
+    description: the standard deviation of the predicted risk
+    is_primary_key: no
+  - name: min_predicted_probability
+    type: float
+    description: the min predicted risk
+    is_primary_key: no
+  - name: p_25_predicted_probability
+    type: float
+    description: the 25% quantile of predicted risk
+    is_primary_key: no
+  - name: p_50_predicted_probability
+    type: float
+    description: The median predicted risk
+    is_primary_key: no
+  - name: p_75_predicted_probability
+    type: float
+    description: the 75% quantile of predicted risk
+    is_primary_key: no
+  - name: max_predicted_probability
+    type: float
+    description: the max predicted risk
+    is_primary_key: no

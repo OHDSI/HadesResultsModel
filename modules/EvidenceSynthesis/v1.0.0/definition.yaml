@@ -1,0 +1,541 @@
+module: EvidenceSynthesis
+prefix: es_
+tables:
+- name: es_analysis
+  description: Results data table es_analysis.
+  fields:
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A unique identifier for the evidence synthesis analysis.
+    is_primary_key: yes
+  - name: evidence_synthesis_description
+    type: varchar(255)
+    description: A description of the evidence synthesis analysis.
+    is_primary_key: no
+  - name: source_method
+    type: varchar(100)
+    description: The method used to produce the source estimates (e.g. 'CohortMethod').
+    is_primary_key: no
+  - name: definition
+    type: varchar
+    description: A JSON string representing the settings of the evidence synthesis
+      analysis.
+    is_primary_key: no
+- name: es_cm_diagnostics_summary
+  description: Results data table es_cm_diagnostics_summary.
+  fields:
+  - name: target_comparator_id
+    type: bigint
+    description: A foreign key referencing the target_comparator table.
+    is_primary_key: yes
+  - name: outcome_id
+    type: int
+    description: The identifier for the outcome cohort.
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: A unique identifier for the cohort method analysis.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: mdrr
+    type: float
+    description: The minimum detectable relative risk.
+    is_primary_key: no
+  - name: i_2
+    type: float
+    description: The I2 statistics for heterogeneity.
+    is_primary_key: no
+  - name: tau
+    type: float
+    description: The estimated tau (standard deviation of the random-effects distribution).
+    is_primary_key: no
+  - name: ease
+    type: float
+    description: The expected absolute systematic error.
+    is_primary_key: no
+  - name: max_sdm
+    type: float
+    description: The maximum absolute standardized difference of mean.
+    is_primary_key: no
+  - name: sdm_family_wise_min_p
+    type: float
+    description: The minimum family-wise P-value for the test whether the absolute
+      SDM exceeds the diagnostic threshold.
+    is_primary_key: no
+  - name: shared_max_sdm
+    type: float
+    description: The maximum absolute standardized difference of mean of the shared
+      balance (shared across outcomes).
+    is_primary_key: no
+  - name: shared_sdm_family_wise_min_p
+    type: float
+    description: The minimum family-wise P-value for the test whether the absolute
+      SDM exceeds the diagnostic threshold for the shared balance (across all outcomes).
+    is_primary_key: no
+  - name: mdrr_diagnostic
+    type: varchar(13)
+    description: PASS/ NOT EVALUATED / FAIL classification of the MDRR diagnostic.
+    is_primary_key: no
+  - name: i_2_diagnostic
+    type: varchar(13)
+    description: PASS/ NOT EVALUATED / FAIL classification of the I2 diagnostic.
+    is_primary_key: no
+  - name: tau_diagnostic
+    type: varchar(13)
+    description: PASS/ NOT EVALUATED / FAIL classification of the tau diagnostic.
+    is_primary_key: no
+  - name: ease_diagnostic
+    type: varchar(13)
+    description: PASS/ NOT EVALUATED / FAIL classification of the EASE diagnostic.
+    is_primary_key: no
+  - name: balance_diagnostic
+    type: varchar(20)
+    description: PASS/ NOT EVALUATED / FAIL  classification of the balance diagnostic
+      (max_sdm).
+    is_primary_key: no
+  - name: shared_balance_diagnostic
+    type: varchar(20)
+    description: PASS/ NOT EVALUATED / FAIL classification of the shared balance diagnostic
+      (shared_max_sdm).
+    is_primary_key: no
+  - name: unblind
+    type: int
+    description: Is unblinding the result recommended? (1 = yes, 0 = no)
+    is_primary_key: no
+- name: es_cm_result
+  description: Results data table es_cm_result.
+  fields:
+  - name: target_comparator_id
+    type: bigint
+    description: A foreign key referencing the target_comparator table.
+    is_primary_key: yes
+  - name: outcome_id
+    type: int
+    description: The identifier for the outcome cohort.
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: A unique identifier for the cohort method analysis.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: rr
+    type: float
+    description: The estimated relative risk (e.g. the hazard ratio).
+    is_primary_key: no
+  - name: ci_95_lb
+    type: float
+    description: The lower bound of the 95% confidence interval of the relative risk.
+    is_primary_key: no
+  - name: ci_95_ub
+    type: float
+    description: The upper bound of the 95% confidence interval of the relative risk.
+    is_primary_key: no
+  - name: p
+    type: float
+    description: The two-sided p-value considering the null hypothesis of no effect.
+    is_primary_key: no
+  - name: one_sided_p
+    type: float
+    description: The one-sided p-value considering the null hypothesis of RR <= 1.
+    is_primary_key: no
+  - name: log_rr
+    type: float
+    description: The log of the relative risk.
+    is_primary_key: no
+  - name: se_log_rr
+    type: float
+    description: The standard error of the log of the relative risk.
+    is_primary_key: no
+  - name: target_subjects
+    type: int
+    description: The number of subject in the target cohort.
+    is_primary_key: no
+  - name: comparator_subjects
+    type: int
+    description: The number of subject in the comparator cohort.
+    is_primary_key: no
+  - name: target_days
+    type: bigint
+    description: The number of days observed in the target cohort.
+    is_primary_key: no
+  - name: comparator_days
+    type: bigint
+    description: The number of days observed in the comparator cohort.
+    is_primary_key: no
+  - name: target_outcomes
+    type: int
+    description: The number of outcomes observed in the target cohort.
+    is_primary_key: no
+  - name: comparator_outcomes
+    type: int
+    description: The number of outcomes observed in the comparator cohort.
+    is_primary_key: no
+  - name: n_databases
+    type: int
+    description: The number of databases that contributed to the meta-analytic estimate.
+    is_primary_key: no
+  - name: calibrated_rr
+    type: float
+    description: The calibrated relative risk.
+    is_primary_key: no
+  - name: calibrated_ci_95_lb
+    type: float
+    description: The lower bound of the calibrated 95% confidence interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_ci_95_ub
+    type: float
+    description: The upper bound of the calibrated 95% confidence interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_p
+    type: float
+    description: The calibrated two-sided p-value.
+    is_primary_key: no
+  - name: calibrated_one_sided_p
+    type: float
+    description: The calibrated one-sided p-value considering the null hypothesis
+      of RR <= 1.
+    is_primary_key: no
+  - name: calibrated_log_rr
+    type: float
+    description: The log of the calibrated relative risk.
+    is_primary_key: no
+  - name: calibrated_se_log_rr
+    type: float
+    description: The standard error of the log of the calibrated relative risk.
+    is_primary_key: no
+  - name: pi_95_lb
+    type: float
+    description: The lower bound of the 95% prediction interval of the relative risk.
+    is_primary_key: no
+  - name: pi_95_ub
+    type: float
+    description: The upper  bound of the 95% prediction interval of the relative risk.
+    is_primary_key: no
+  - name: calibrated_pi_95_lb
+    type: float
+    description: The lower bound of the calibrated 95% prediction interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_pi_95_ub
+    type: float
+    description: The upper  bound of the calibrated 95% prediction interval of the
+      relative risk.
+    is_primary_key: no
+- name: es_cm_covariate_balance
+  description: Results data table es_cm_covariate_balance.
+  fields:
+  - name: target_comparator_id
+    type: bigint
+    description: A foreign key referencing the target_comparator table.
+    is_primary_key: yes
+  - name: outcome_id
+    type: bigint
+    description: The identifier for the outcome cohort.
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: A foreign key referencing the cm_analysis table.
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: A foreign key referencing the cm_covariate table.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: std_diff_before
+    type: float
+    description: The standardized difference of the means between the target and comparator
+      cohort before propensity score adjustment.
+    is_primary_key: no
+  - name: std_diff_var_before
+    type: float
+    description: The variance of the standardized difference of the means between
+      the target and comparator cohort before propensity score adjustment.
+    is_primary_key: no
+  - name: balanced_before
+    type: int
+    description: Is the covariate balanced before propensity score adjustment? (1
+      = yes, 0 = no)
+    is_primary_key: no
+  - name: std_diff_after
+    type: float
+    description: The standardized difference of the means between the target and comparator
+      cohort after propensity score adjustment.
+    is_primary_key: no
+  - name: std_diff_var_after
+    type: float
+    description: The variance of the standardized difference of the means between
+      the target and comparator cohort after propensity score adjustment.
+    is_primary_key: no
+  - name: balanced_after
+    type: int
+    description: Is the covariate balanced after propensity score adjustment? (1 =
+      yes, 0 = no)
+    is_primary_key: no
+- name: es_cm_shared_covariate_balance
+  description: Results data table es_cm_shared_covariate_balance.
+  fields:
+  - name: target_comparator_id
+    type: bigint
+    description: A foreign key referencing the target_comparator table.
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: A foreign key referencing the cm_analysis table.
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: A foreign key referencing the cm_covariate table.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: std_diff_before
+    type: float
+    description: The standardized difference of the means between the target and comparator
+      cohort before propensity score adjustment.
+    is_primary_key: no
+  - name: std_diff_var_before
+    type: float
+    description: The variance of the standardized difference of the means between
+      the target and comparator cohort before propensity score adjustment.
+    is_primary_key: no
+  - name: balanced_before
+    type: int
+    description: Is the covariate balanced before propensity score adjustment? (1
+      = yes, 0 = no)
+    is_primary_key: no
+  - name: std_diff_after
+    type: float
+    description: The standardized difference of the means between the target and comparator
+      cohort after propensity score adjustment.
+    is_primary_key: no
+  - name: std_diff_var_after
+    type: float
+    description: The variance of the standardized difference of the means between
+      the target and comparator cohort after propensity score adjustment.
+    is_primary_key: no
+  - name: balanced_after
+    type: int
+    description: Is the covariate balanced after propensity score adjustment? (1 =
+      yes, 0 = no)
+    is_primary_key: no
+- name: es_cm_covariate
+  description: Results data table es_cm_covariate.
+  fields:
+  - name: covariate_id
+    type: bigint
+    description: A unique identified for a covariate.
+    is_primary_key: yes
+  - name: covariate_name
+    type: varchar
+    description: 'A name for a covariate, e.g. ''Age group: 20-25 years''.'
+    is_primary_key: no
+  - name: analysis_id
+    type: int
+    description: Foreign key referencing the cm_analysis table.
+    is_primary_key: yes
+  - name: covariate_analysis_id
+    type: int
+    description: Foreign key referencing the cm_covariate_analysis table.
+    is_primary_key: no
+- name: es_sccs_diagnostics_summary
+  description: Results data table es_sccs_diagnostics_summary.
+  fields:
+  - name: exposures_outcome_set_id
+    type: int
+    description: A foreign key referencing the sccs_exposures_outcome_set table.
+    is_primary_key: yes
+  - name: covariate_id
+    type: int
+    description: A foreign key referencing the sccs_covariate table. The identifier
+      for the covariate of interest.
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: A unique identifier for the cohort method analysis.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: mdrr
+    type: float
+    description: The minimum detectable relative risk.
+    is_primary_key: no
+  - name: i_2
+    type: float
+    description: The I2 statistics for heterogeneity.
+    is_primary_key: no
+  - name: tau
+    type: float
+    description: The estimated tau (standard deviation of the random-effects distribution).
+    is_primary_key: no
+  - name: ease
+    type: float
+    description: The expected absolute systematic error.
+    is_primary_key: no
+  - name: mdrr_diagnostic
+    type: varchar(13)
+    description: PASS/ NOT EVALUATED / FAIL classification of the MDRR diagnostic.
+    is_primary_key: no
+  - name: i_2_diagnostic
+    type: varchar(13)
+    description: Pass / warning / fail classification of the I2 diagnostic.
+    is_primary_key: no
+  - name: tau_diagnostic
+    type: varchar(13)
+    description: Pass / warning / fail classification of the tau diagnostic.
+    is_primary_key: no
+  - name: ease_diagnostic
+    type: varchar(13)
+    description: Pass / warning / fail classification of the EASE diagnostic.
+    is_primary_key: no
+  - name: unblind
+    type: int
+    description: Is unblinding the result recommended? (1 = yes, 0 = no)
+    is_primary_key: no
+- name: es_sccs_result
+  description: Results data table es_sccs_result.
+  fields:
+  - name: analysis_id
+    type: int
+    description: A foreign key referencing the sccs_analysis table.
+    is_primary_key: yes
+  - name: exposures_outcome_set_id
+    type: int
+    description: A foreign key referencing the sccs_exposures_outcome_set table.
+    is_primary_key: yes
+  - name: covariate_id
+    type: int
+    description: A foreign key referencing the sccs_covariate table. The identifier
+      for the covariate of interest.
+    is_primary_key: yes
+  - name: evidence_synthesis_analysis_id
+    type: int
+    description: A foreign key referencing the es_analysis table.
+    is_primary_key: yes
+  - name: rr
+    type: float
+    description: The estimated relative risk (i.e. the incidence rate ratio).
+    is_primary_key: no
+  - name: ci_95_lb
+    type: float
+    description: The lower bound of the 95% confidence interval of the relative risk.
+    is_primary_key: no
+  - name: ci_95_ub
+    type: float
+    description: The upper bound of the 95% confidence interval of the relative risk.
+    is_primary_key: no
+  - name: p
+    type: float
+    description: The two-sided p-value considering the null hypothesis of no effect.
+    is_primary_key: no
+  - name: one_sided_p
+    type: float
+    description: The one-sided p-value considering the null hypothesis of RR <= 1.
+    is_primary_key: no
+  - name: outcome_subjects
+    type: int
+    description: The number of subjects with at least one outcome.
+    is_primary_key: no
+  - name: outcome_events
+    type: int
+    description: The number of outcome events.
+    is_primary_key: no
+  - name: outcome_observation_periods
+    type: int
+    description: The number of observation periods containing at least one outcome.
+    is_primary_key: no
+  - name: covariate_subjects
+    type: int
+    description: The number of subjects having the covariate.
+    is_primary_key: no
+  - name: covariate_days
+    type: bigint
+    description: The total covariate time in days.
+    is_primary_key: no
+  - name: covariate_eras
+    type: int
+    description: The number of continuous eras of the covariate.
+    is_primary_key: no
+  - name: covariate_outcomes
+    type: int
+    description: The number of outcomes observed during the covariate time.
+    is_primary_key: no
+  - name: observed_days
+    type: bigint
+    description: The number of days subjects were observed.
+    is_primary_key: no
+  - name: n_databases
+    type: int
+    description: The number of databases that contributed to the meta-analytic estimate.
+    is_primary_key: no
+  - name: log_rr
+    type: float
+    description: The log of the relative risk.
+    is_primary_key: no
+  - name: se_log_rr
+    type: float
+    description: The standard error of the log of the relative risk.
+    is_primary_key: no
+  - name: calibrated_rr
+    type: float
+    description: The calibrated relative risk.
+    is_primary_key: no
+  - name: calibrated_ci_95_lb
+    type: float
+    description: The lower bound of the calibrated 95% confidence interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_ci_95_ub
+    type: float
+    description: The upper bound of the calibrated 95% confidence interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_p
+    type: float
+    description: The calibrated two-sided p-value.
+    is_primary_key: no
+  - name: calibrated_one_sided_p
+    type: float
+    description: The calibrated one-sided p-value considering the null hypothesis
+      of RR <= 1.
+    is_primary_key: no
+  - name: calibrated_log_rr
+    type: float
+    description: The log of the calibrated relative risk.
+    is_primary_key: no
+  - name: calibrated_se_log_rr
+    type: float
+    description: The standard error of the log of the calibrated relative risk.
+    is_primary_key: no
+  - name: pi_95_lb
+    type: float
+    description: The lower bound of the 95% prediction interval of the relative risk.
+    is_primary_key: no
+  - name: pi_95_ub
+    type: float
+    description: The upper  bound of the 95% prediction interval of the relative risk.
+    is_primary_key: no
+  - name: calibrated_pi_95_lb
+    type: float
+    description: The lower bound of the calibrated 95% prediction interval of the
+      relative risk.
+    is_primary_key: no
+  - name: calibrated_pi_95_ub
+    type: float
+    description: The upper  bound of the calibrated 95% prediction interval of the
+      relative risk.
+    is_primary_key: no

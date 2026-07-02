@@ -1,0 +1,59 @@
+module: DatabaseMetaData
+prefix: database_meta_data_
+tables:
+- name: database_meta_data
+  description: Results data table database_meta_data.
+  fields:
+  - name: cdm_source_name
+    type: varchar
+    description: The name of the CDM instance.
+    is_primary_key: no
+  - name: cdm_source_abbreviation
+    type: varchar
+    description: The abbreviation of the CDM instance.
+    is_primary_key: no
+  - name: cdm_holder
+    type: varchar
+    description: The holder of the CDM instance.
+    is_primary_key: no
+  - name: source_description
+    type: varchar
+    description: The description of the CDM instance.
+    is_primary_key: no
+  - name: source_documentation_reference
+    type: varchar
+    description: Field source_documentation_reference in table database_meta_data.
+    is_primary_key: no
+  - name: cdm_etl_reference
+    type: varchar
+    description: Put the link to the CDM version used.
+    is_primary_key: no
+  - name: source_release_date
+    type: date
+    description: The release date of the source data.
+    is_primary_key: no
+  - name: cdm_release_date
+    type: date
+    description: The release data of the CDM instance.
+    is_primary_key: no
+  - name: cdm_version
+    type: varchar
+    description: Field cdm_version in table database_meta_data.
+    is_primary_key: no
+  - name: cdm_version_concept_id
+    type: int
+    description: The Concept Id representing the version of the CDM.
+    is_primary_key: no
+  - name: vocabulary_version
+    type: varchar
+    description: Field vocabulary_version in table database_meta_data.
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: Field database_id in table database_meta_data.
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: max_obs_period_end_date
+    type: date
+    description: Field max_obs_period_end_date in table database_meta_data.
+    is_primary_key: no

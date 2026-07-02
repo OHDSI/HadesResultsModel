@@ -1,0 +1,855 @@
+module: Characterization
+prefix: c_
+tables:
+- name: c_time_to_event
+  description: Results data table c_time_to_event.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: target_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the target cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: outcome_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the outcome cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: outcome_type
+    type: varchar(100)
+    description: Is the outvome a first occurrence or repeat
+    is_primary_key: yes
+  - name: target_outcome_type
+    type: varchar(40)
+    description: When does the outcome occur relative to target
+    is_primary_key: yes
+  - name: time_to_event
+    type: int
+    description: The time (in days) from target index to outcome start
+    is_primary_key: yes
+  - name: num_events
+    type: int
+    description: Number of events that occur during the specified time to event
+    is_primary_key: no
+  - name: time_scale
+    type: varchar(20)
+    description: time scale for the number of events
+    is_primary_key: yes
+- name: c_rechallenge_fail_case_series
+  description: Results data table c_rechallenge_fail_case_series.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: dechallenge_stop_interval
+    type: int
+    description: The time period that É
+    is_primary_key: yes
+  - name: dechallenge_evaluation_window
+    type: int
+    description: The time period that É
+    is_primary_key: yes
+  - name: target_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the target cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: outcome_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the outcome cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: person_key
+    type: int
+    description: The dense rank for the patient (an identifier that is not the same
+      as the database)
+    is_primary_key: yes
+  - name: subject_id
+    type: bigint
+    description: The person identifier for the failed case series (optional)
+    is_primary_key: no
+  - name: dechallenge_exposure_number
+    type: int
+    description: The number of times a dechallenge has occurred
+    is_primary_key: yes
+  - name: dechallenge_exposure_start_date_offset
+    type: int
+    description: The offset for the dechallenge start (number of days after index)
+    is_primary_key: no
+  - name: dechallenge_exposure_end_date_offset
+    type: int
+    description: The offset for the dechallenge end (number of days after index)
+    is_primary_key: no
+  - name: dechallenge_outcome_number
+    type: int
+    description: The number of times an outcome has occurred during the dechallenge
+    is_primary_key: yes
+  - name: dechallenge_outcome_start_date_offset
+    type: int
+    description: The offset for the outcome start (number of days after index)
+    is_primary_key: no
+  - name: rechallenge_exposure_number
+    type: int
+    description: The number of times a rechallenge exposure has occurred
+    is_primary_key: yes
+  - name: rechallenge_exposure_start_date_offset
+    type: int
+    description: The offset for the rechallenge start (number of days after index)
+    is_primary_key: no
+  - name: rechallenge_exposure_end_date_offset
+    type: int
+    description: The offset for the rechallenge end (number of days after index)
+    is_primary_key: no
+  - name: rechallenge_outcome_number
+    type: int
+    description: The number of times the outcome has occurred during the rechallenge
+    is_primary_key: yes
+  - name: rechallenge_outcome_start_date_offset
+    type: int
+    description: The offset for the outcome start (number of days after index)
+    is_primary_key: no
+- name: c_dechallenge_rechallenge
+  description: Results data table c_dechallenge_rechallenge.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: dechallenge_stop_interval
+    type: int
+    description: The dechallenge stop interval
+    is_primary_key: yes
+  - name: dechallenge_evaluation_window
+    type: int
+    description: The dechallenge evaluation window
+    is_primary_key: yes
+  - name: target_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the target cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: outcome_cohort_definition_id
+    type: bigint
+    description: The cohort definition id for the outcome cohort
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: num_exposure_eras
+    type: int
+    description: The number of exposure eras
+    is_primary_key: no
+  - name: num_persons_exposed
+    type: int
+    description: The number of persons exposed
+    is_primary_key: no
+  - name: num_cases
+    type: int
+    description: The number of cases
+    is_primary_key: no
+  - name: dechallenge_attempt
+    type: int
+    description: The number of dechallenge attempts
+    is_primary_key: no
+  - name: dechallenge_fail
+    type: int
+    description: The dechallenge fail count
+    is_primary_key: no
+  - name: dechallenge_success
+    type: int
+    description: The dechallenge success count
+    is_primary_key: no
+  - name: rechallenge_attempt
+    type: int
+    description: The rechallenge attempt count
+    is_primary_key: no
+  - name: rechallenge_fail
+    type: int
+    description: The rechallenge fail count
+    is_primary_key: no
+  - name: rechallenge_success
+    type: int
+    description: The rechallenge success count
+    is_primary_key: no
+  - name: pct_dechallenge_attempt
+    type: float
+    description: The percentage of dechallenge attempts
+    is_primary_key: no
+  - name: pct_dechallenge_success
+    type: float
+    description: The percentage of dechallenge success
+    is_primary_key: no
+  - name: pct_dechallenge_fail
+    type: float
+    description: The percentage of dechallenge fails
+    is_primary_key: no
+  - name: pct_rechallenge_attempt
+    type: float
+    description: The percentage of rechallenge attempts
+    is_primary_key: no
+  - name: pct_rechallenge_success
+    type: float
+    description: The percentage of rechallenge success
+    is_primary_key: no
+  - name: pct_rechallenge_fail
+    type: float
+    description: The percentage of rechallenge fails
+    is_primary_key: no
+- name: c_analysis_ref
+  description: Results data table c_analysis_ref.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: analysis_id
+    type: int
+    description: The analysis identifier
+    is_primary_key: yes
+  - name: analysis_name
+    type: varchar
+    description: The analysis name
+    is_primary_key: no
+  - name: domain_id
+    type: varchar
+    description: The domain id
+    is_primary_key: no
+  - name: start_day
+    type: int
+    description: The start day
+    is_primary_key: no
+  - name: end_day
+    type: int
+    description: The end day (documented from legacy CSV model).
+    is_primary_key: no
+  - name: is_binary
+    type: varchar(1)
+    description: Is this a binary analysis
+    is_primary_key: no
+  - name: missing_means_zero
+    type: varchar(1)
+    description: Missing means zero
+    is_primary_key: no
+- name: c_covariate_ref
+  description: Results data table c_covariate_ref.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covariate identifier
+    is_primary_key: yes
+  - name: covariate_name
+    type: varchar
+    description: The covariate name
+    is_primary_key: no
+  - name: analysis_id
+    type: int
+    description: The analysis identifier
+    is_primary_key: no
+  - name: concept_id
+    type: bigint
+    description: The concept identifier
+    is_primary_key: no
+  - name: value_as_concept_id
+    type: int
+    description: The value as concept_id for features created from observation or
+      measurement values
+    is_primary_key: no
+  - name: collisions
+    type: int
+    description: The number of collisions found for the covariate_id
+    is_primary_key: no
+- name: c_target_covariates
+  description: Results data table c_target_covariates.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_target_id
+    type: int
+    description: The characteriation target id
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covaraite id
+    is_primary_key: yes
+  - name: sum_value
+    type: int
+    description: The sum value
+    is_primary_key: no
+  - name: average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+- name: c_target_covariates_continuous
+  description: Results data table c_target_covariates_continuous.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_target_id
+    type: int
+    description: The characteriation target id
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covariate identifier
+    is_primary_key: yes
+  - name: count_value
+    type: int
+    description: The count value
+    is_primary_key: no
+  - name: min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no
+- name: c_execution_settings
+  description: Results data table c_execution_settings.
+  fields:
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: database_hash
+    type: varchar(50)
+    description: Field database_hash in table c_execution_settings.
+    is_primary_key: no
+  - name: mode
+    type: varchar(25)
+    description: Whether Efficient/CohortIncidence/PatientLevelPrediction mode was
+      used for risk factor non-cases
+    is_primary_key: no
+  - name: min_characterization_mean
+    type: float
+    description: The minimum fraction of patients who have a covariate for the covariate
+      to be included in results
+    is_primary_key: no
+  - name: min_covariate_count
+    type: int
+    description: The minimum number of patients who have a covariate for the covariate
+      to be included in results (useful if cohorts are small)
+    is_primary_key: no
+  - name: min_smd
+    type: float
+    description: The minimum standardized mean value a risk factor must have to be
+      included in results
+    is_primary_key: no
+- name: c_target_settings
+  description: Results data table c_target_settings.
+  fields:
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: characterization_target_id
+    type: bigint
+    description: The target cohort id after inclusion criteria used internally by
+      characterization
+    is_primary_key: yes
+  - name: target_id
+    type: bigint
+    description: The target cohort id
+    is_primary_key: no
+  - name: limit_to_first_in_n_days
+    type: int
+    description: Target exposures are only included if they occur >= first_in_n_days
+      days after the last exposure
+    is_primary_key: no
+  - name: min_prior_observation
+    type: int
+    description: Target exposures with < min_prior_obs days observation before exposure
+      are excluded
+    is_primary_key: no
+- name: c_case_settings
+  description: Results data table c_case_settings.
+  fields:
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: characterization_case_id
+    type: bigint
+    description: The case cohort id that is unique per characterization_target_id,
+      outcome_id, outcome_washout_days and time-at-risk settings
+    is_primary_key: yes
+  - name: characterization_target_id
+    type: bigint
+    description: The target cohort id after inclusion criteria used internally by
+      characterization
+    is_primary_key: no
+  - name: outcome_id
+    type: bigint
+    description: The outcome cohort id
+    is_primary_key: no
+  - name: outcome_washout_days
+    type: int
+    description: Outcome exposures with < outcome_washout_days days after the last
+      outcome exposure are excluded
+    is_primary_key: no
+  - name: start_anchor
+    type: varchar(15)
+    description: The start anchor
+    is_primary_key: no
+  - name: end_anchor
+    type: varchar(15)
+    description: The end anchor
+    is_primary_key: no
+  - name: risk_window_start
+    type: int
+    description: The risk window start
+    is_primary_key: no
+  - name: risk_window_end
+    type: int
+    description: The risk window end
+    is_primary_key: no
+  - name: runtype
+    type: varchar(50)
+    description: Whether this case was used in risk-factor and/or case-series
+    is_primary_key: no
+- name: c_case_series_settings
+  description: Results data table c_case_series_settings.
+  fields:
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: case_pre_target_duration
+    type: int
+    description: The number of days before target index to create the before target
+      period in case series
+    is_primary_key: no
+  - name: case_post_outcome_duration
+    type: int
+    description: The number of days after first outcome after target to create the
+      after outcome period in case series
+    is_primary_key: no
+- name: c_attrition
+  description: Results data table c_attrition.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The characterization cohort id
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: attr_reason
+    type: varchar(100)
+    description: Description of cohort or removal
+    is_primary_key: yes
+  - name: 'n'
+    type: bigint
+    description: The number of people remaining or removed
+    is_primary_key: no
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+- name: c_risk_factor_covariates
+  description: Results data table c_risk_factor_covariates.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_case_id
+    type: bigint
+    description: The case cohort id that is unique per characterization_target_id,
+      outcome_id, outcome_washout_days and time-at-risk settings
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covaraite id
+    is_primary_key: yes
+  - name: non_case_sum_value
+    type: int
+    description: The sum value for the non-cases
+    is_primary_key: no
+  - name: non_case_average_value
+    type: float
+    description: The average value for the non-cases
+    is_primary_key: no
+  - name: case_sum_value
+    type: int
+    description: The sum value of the cases
+    is_primary_key: no
+  - name: case_average_value
+    type: float
+    description: The average value of the cases
+    is_primary_key: no
+  - name: standardized_mean_difference
+    type: float
+    description: The standardized mean difference for the covariate
+    is_primary_key: no
+- name: c_risk_factor_covariates_continuous
+  description: Results data table c_risk_factor_covariates_continuous.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_case_id
+    type: bigint
+    description: The case cohort id that is unique per characterization_target_id,
+      outcome_id, outcome_washout_days and time-at-risk settings
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covariate identifier
+    is_primary_key: yes
+  - name: case_count_value
+    type: int
+    description: The count value
+    is_primary_key: no
+  - name: case_min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: case_max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: case_average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: case_standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: case_median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: case_p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: case_p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: case_p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: case_p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no
+  - name: non_case_count_value
+    type: int
+    description: The count value
+    is_primary_key: no
+  - name: non_case_min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: non_case_max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: non_case_average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: non_case_standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: non_case_median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: non_case_p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: non_case_p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: non_case_p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: non_case_p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no
+  - name: standardized_mean_difference
+    type: float
+    description: The standardized mean difference for the covariate
+    is_primary_key: no
+- name: c_case_series_covariates
+  description: Results data table c_case_series_covariates.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_case_id
+    type: bigint
+    description: The case cohort id that is unique per characterization_target_id,
+      outcome_id, outcome_washout_days and time-at-risk settings
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covaraite id
+    is_primary_key: yes
+  - name: before_sum_value
+    type: int
+    description: The sum value for the non-cases
+    is_primary_key: no
+  - name: before_average_value
+    type: float
+    description: The average value for the non-cases
+    is_primary_key: no
+  - name: during_sum_value
+    type: int
+    description: The sum value of the cases
+    is_primary_key: no
+  - name: during_average_value
+    type: float
+    description: The average value of the cases
+    is_primary_key: no
+  - name: after_sum_value
+    type: int
+    description: The sum value of the cases
+    is_primary_key: no
+  - name: after_average_value
+    type: float
+    description: The average value of the cases
+    is_primary_key: no
+- name: c_case_series_covariates_continuous
+  description: Results data table c_case_series_covariates_continuous.
+  fields:
+  - name: database_id
+    type: varchar(100)
+    description: The database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: setting_id
+    type: varchar(50)
+    description: The run identifier
+    is_primary_key: yes
+  - name: characterization_case_id
+    type: bigint
+    description: The case cohort id that is unique per characterization_target_id,
+      outcome_id, outcome_washout_days and time-at-risk settings
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: The covariate identifier
+    is_primary_key: yes
+  - name: before_count_value
+    type: int
+    description: The count value
+    is_primary_key: no
+  - name: before_min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: before_max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: before_average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: before_standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: before_median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: before_p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: before_p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: before_p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: before_p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no
+  - name: during_min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: during_max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: during_average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: during_standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: during_median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: during_p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: during_p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: during_p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: during_p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no
+  - name: after_count_value
+    type: int
+    description: The count value
+    is_primary_key: no
+  - name: after_min_value
+    type: float
+    description: The min value
+    is_primary_key: no
+  - name: after_max_value
+    type: float
+    description: The max value
+    is_primary_key: no
+  - name: after_average_value
+    type: float
+    description: The average value
+    is_primary_key: no
+  - name: after_standard_deviation
+    type: float
+    description: The standard devidation
+    is_primary_key: no
+  - name: after_median_value
+    type: float
+    description: The median value
+    is_primary_key: no
+  - name: after_p_10_value
+    type: float
+    description: The 10th percentile
+    is_primary_key: no
+  - name: after_p_25_value
+    type: float
+    description: The 25th percentile
+    is_primary_key: no
+  - name: after_p_75_value
+    type: float
+    description: The 75th percentile
+    is_primary_key: no
+  - name: after_p_90_value
+    type: float
+    description: The 90th percentile
+    is_primary_key: no

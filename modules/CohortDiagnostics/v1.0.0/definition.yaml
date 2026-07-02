@@ -1,0 +1,815 @@
+module: CohortDiagnostics
+prefix: cd_
+tables:
+- name: cd_cohort
+  description: Results data table cd_cohort.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: cohort_name
+    type: varchar
+    description: cohort name (documented from legacy CSV model).
+    is_primary_key: no
+  - name: metadata
+    type: varchar
+    description: meta data about the cohort
+    is_primary_key: no
+  - name: json
+    type: varchar
+    description: circe json description
+    is_primary_key: no
+  - name: sql
+    type: varchar
+    description: sql derrived from circe description
+    is_primary_key: no
+  - name: subset_parent
+    type: bigint
+    description: cohort subset parent id (some as if not a subset)
+    is_primary_key: no
+  - name: subset_definition_id
+    type: bigint
+    description: subset cohort definition id
+    is_primary_key: no
+  - name: is_subset
+    type: int
+    description: is the cohort a subset or not?
+    is_primary_key: no
+- name: cd_subset_definition
+  description: Results data table cd_subset_definition.
+  fields:
+  - name: subset_definition_id
+    type: bigint
+    description: subset cohort definition id
+    is_primary_key: yes
+  - name: json
+    type: varchar
+    description: subset cohort definition json
+    is_primary_key: no
+- name: cd_cohort_count
+  description: Results data table cd_cohort_count.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: cohort_entries
+    type: float
+    description: number of entries in to cohort (an individual can be counted multiple
+      times)
+    is_primary_key: no
+  - name: cohort_subjects
+    type: float
+    description: number of individuals in cohort
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: cd_cohort_inclusion
+  description: Results data table cd_cohort_inclusion.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: rule_sequence
+    type: bigint
+    description: inclusion rule sequence used to determine rule
+    is_primary_key: yes
+  - name: name
+    type: varchar
+    description: name of inclusion rule
+    is_primary_key: no
+  - name: description
+    type: varchar
+    description: description of inclusion rule
+    is_primary_key: no
+- name: cd_cohort_inc_result
+  description: Results data table cd_cohort_inc_result.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: mode_id
+    type: bigint
+    description: mode of inclusion rule
+    is_primary_key: yes
+  - name: inclusion_rule_mask
+    type: bigint
+    description: inclusion rule bit mask
+    is_primary_key: yes
+  - name: person_count
+    type: float
+    description: person count following rule application
+    is_primary_key: no
+- name: cd_cohort_inc_stats
+  description: Results data table cd_cohort_inc_stats.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: rule_sequence
+    type: bigint
+    description: inclusion rule sequence used to determine rule
+    is_primary_key: yes
+  - name: mode_id
+    type: bigint
+    description: mode of inclusion rule
+    is_primary_key: yes
+  - name: person_count
+    type: float
+    description: person count following rule application
+    is_primary_key: no
+  - name: gain_count
+    type: float
+    description: number of people gained from rule
+    is_primary_key: no
+  - name: person_total
+    type: float
+    description: person total
+    is_primary_key: no
+- name: cd_cohort_summary_stats
+  description: Results data table cd_cohort_summary_stats.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: mode_id
+    type: bigint
+    description: mode identifier
+    is_primary_key: yes
+  - name: base_count
+    type: float
+    description: base count of cohort
+    is_primary_key: no
+  - name: final_count
+    type: float
+    description: final count after rules applied
+    is_primary_key: no
+- name: cd_concept
+  description: Results data table cd_concept.
+  fields:
+  - name: concept_id
+    type: bigint
+    description: concept id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: concept_name
+    type: varchar(255)
+    description: concept name
+    is_primary_key: no
+  - name: domain_id
+    type: varchar(20)
+    description: concept domain id
+    is_primary_key: no
+  - name: vocabulary_id
+    type: varchar(50)
+    description: vocabulary concept id
+    is_primary_key: no
+  - name: concept_class_id
+    type: varchar(20)
+    description: concept class identifier
+    is_primary_key: no
+  - name: standard_concept
+    type: varchar(1)
+    description: is a standard concept?
+    is_primary_key: no
+  - name: concept_code
+    type: varchar(255)
+    description: concept source code
+    is_primary_key: no
+  - name: valid_start_date
+    type: Date
+    description: period of validity start
+    is_primary_key: no
+  - name: valid_end_date
+    type: Date
+    description: period of validity end
+    is_primary_key: no
+  - name: invalid_reason
+    type: varchar
+    description: reason concept is no longer valid
+    is_primary_key: no
+- name: cd_concept_ancestor
+  description: Results data table cd_concept_ancestor.
+  fields:
+  - name: ancestor_concept_id
+    type: bigint
+    description: ancestor concept id
+    is_primary_key: yes
+  - name: descendant_concept_id
+    type: bigint
+    description: descendant concept id
+    is_primary_key: yes
+  - name: min_levels_of_separation
+    type: int
+    description: minimum levels of separation in heirarchy
+    is_primary_key: no
+  - name: max_levels_of_separation
+    type: int
+    description: maximum level of separation in heirarchy
+    is_primary_key: no
+- name: cd_concept_relationship
+  description: Results data table cd_concept_relationship.
+  fields:
+  - name: concept_id_1
+    type: bigint
+    description: concept identifier 1
+    is_primary_key: yes
+  - name: concept_id_2
+    type: bigint
+    description: concept identifier 2
+    is_primary_key: yes
+  - name: relationship_id
+    type: varchar(20)
+    description: relationship identifier
+    is_primary_key: yes
+  - name: valid_start_date
+    type: Date
+    description: period of validity start
+    is_primary_key: no
+  - name: valid_end_date
+    type: Date
+    description: period of validity end
+    is_primary_key: no
+  - name: invalid_reason
+    type: varchar(1)
+    description: reason relationship is no longer valid
+    is_primary_key: no
+- name: cd_concept_sets
+  description: Results data table cd_concept_sets.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: concept id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: concept_set_id
+    type: int
+    description: concept set identifier
+    is_primary_key: yes
+  - name: concept_set_sql
+    type: varchar
+    description: concept set sql
+    is_primary_key: no
+  - name: concept_set_name
+    type: varchar(255)
+    description: concept set name
+    is_primary_key: no
+  - name: concept_set_expression
+    type: varchar
+    description: concept set expression
+    is_primary_key: no
+- name: cd_concept_synonym
+  description: Results data table cd_concept_synonym.
+  fields:
+  - name: concept_id
+    type: bigint
+    description: concept id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: concept_synonym_name
+    type: varchar
+    description: concept synonym name
+    is_primary_key: yes
+  - name: language_concept_id
+    type: bigint
+    description: lanague id (documented from legacy CSV model).
+    is_primary_key: yes
+- name: cd_database
+  description: Results data table cd_database.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: database_name
+    type: varchar
+    description: cdm name (documented from legacy CSV model).
+    is_primary_key: no
+  - name: description
+    type: varchar
+    description: description of cdm
+    is_primary_key: no
+  - name: is_meta_analysis
+    type: varchar(1)
+    description: is meta analysis?
+    is_primary_key: no
+  - name: vocabulary_version
+    type: varchar
+    description: vocabulary version
+    is_primary_key: no
+  - name: vocabulary_version_cdm
+    type: varchar
+    description: vocabulary_version_cdm
+    is_primary_key: no
+- name: cd_domain
+  description: Results data table cd_domain.
+  fields:
+  - name: domain_id
+    type: varchar(20)
+    description: domain identifier
+    is_primary_key: yes
+  - name: domain_name
+    type: varchar(255)
+    description: concept domain name
+    is_primary_key: no
+  - name: domain_concept_id
+    type: bigint
+    description: domain concept identifier in concept table
+    is_primary_key: no
+- name: cd_incidence_rate
+  description: Results data table cd_incidence_rate.
+  fields:
+  - name: cohort_count
+    type: float
+    description: total count in cohort
+    is_primary_key: no
+  - name: person_years
+    type: float
+    description: sum of total person years
+    is_primary_key: no
+  - name: gender
+    type: varchar
+    description: gender grouping
+    is_primary_key: no
+  - name: age_group
+    type: varchar
+    description: age grouping
+    is_primary_key: no
+  - name: calendar_year
+    type: varchar(4)
+    description: calendar year in cohort
+    is_primary_key: no
+  - name: incidence_rate
+    type: float
+    description: incidence rate computed
+    is_primary_key: no
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: no
+    references: database_meta_data.database_id
+- name: cd_included_source_concept
+  description: Results data table cd_included_source_concept.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: cohort id (documented from legacy CSV model).
+    is_primary_key: yes
+  - name: concept_set_id
+    type: int
+    description: concept set identifier
+    is_primary_key: yes
+  - name: concept_id
+    type: bigint
+    description: concept identifier 1
+    is_primary_key: yes
+  - name: source_concept_id
+    type: bigint
+    description: source concept id
+    is_primary_key: yes
+  - name: concept_subjects
+    type: float
+    description: subjects with concept
+    is_primary_key: no
+  - name: concept_count
+    type: float
+    description: total count of concept
+    is_primary_key: no
+- name: cd_index_event_breakdown
+  description: Results data table cd_index_event_breakdown.
+  fields:
+  - name: concept_id
+    type: bigint
+    description: concept identifier
+    is_primary_key: yes
+  - name: concept_count
+    type: float
+    description: number of concept occurences
+    is_primary_key: no
+  - name: subject_count
+    type: float
+    description: number of distinct people
+    is_primary_key: no
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: domain_field
+    type: varchar
+    description: domain identifier
+    is_primary_key: yes
+  - name: domain_table
+    type: varchar
+    description: domain table
+    is_primary_key: yes
+- name: cd_metadata
+  description: Results data table cd_metadata.
+  fields:
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: start_time
+    type: varchar
+    description: when run started
+    is_primary_key: yes
+  - name: variable_field
+    type: varchar
+    description: variable name
+    is_primary_key: yes
+  - name: value_field
+    type: varchar
+    description: variable value
+    is_primary_key: no
+- name: cd_orphan_concept
+  description: Results data table cd_orphan_concept.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: concept_set_id
+    type: int
+    description: concept set identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: concept_id
+    type: bigint
+    description: concept identifier
+    is_primary_key: yes
+  - name: concept_count
+    type: float
+    description: number of concept occurences
+    is_primary_key: no
+  - name: concept_subjects
+    type: float
+    description: number of distinct people
+    is_primary_key: no
+- name: cd_relationship
+  description: Results data table cd_relationship.
+  fields:
+  - name: relationship_id
+    type: varchar(20)
+    description: relationship identifier
+    is_primary_key: yes
+  - name: relationship_name
+    type: varchar(255)
+    description: relationship name
+    is_primary_key: no
+  - name: is_hierarchical
+    type: varchar(1)
+    description: is heirarchical relationship?
+    is_primary_key: no
+  - name: defines_ancestry
+    type: varchar(1)
+    description: defines ancestory
+    is_primary_key: no
+  - name: reverse_relationship_id
+    type: varchar(20)
+    description: reverse relationship concept id
+    is_primary_key: yes
+  - name: relationship_concept_id
+    type: bigint
+    description: relationship concept identifier in concept table
+    is_primary_key: yes
+- name: cd_resolved_concepts
+  description: Results data table cd_resolved_concepts.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: concept_set_id
+    type: int
+    description: concept set identifier
+    is_primary_key: yes
+  - name: concept_id
+    type: bigint
+    description: concept identifier
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: cd_temporal_analysis_ref
+  description: Results data table cd_temporal_analysis_ref.
+  fields:
+  - name: analysis_id
+    type: int
+    description: temporal analysis identifier
+    is_primary_key: yes
+  - name: analysis_name
+    type: varchar
+    description: name of temporal analysis
+    is_primary_key: no
+  - name: domain_id
+    type: varchar(20)
+    description: domain identifier
+    is_primary_key: yes
+  - name: is_binary
+    type: varchar(1)
+    description: is binary or continuous measure (proportion or average)
+    is_primary_key: no
+  - name: missing_means_zero
+    type: varchar(1)
+    description: missing means no count
+    is_primary_key: no
+- name: cd_temporal_covariate_ref
+  description: Results data table cd_temporal_covariate_ref.
+  fields:
+  - name: covariate_id
+    type: bigint
+    description: covariate identifier
+    is_primary_key: yes
+  - name: covariate_name
+    type: varchar
+    description: name of covariate
+    is_primary_key: no
+  - name: analysis_id
+    type: int
+    description: temporal analysis identifier
+    is_primary_key: no
+  - name: concept_id
+    type: bigint
+    description: concept identifier
+    is_primary_key: no
+  - name: value_as_concept_id
+    type: bigint
+    description: maps to a concept id for categorical variables (where present)
+    is_primary_key: no
+- name: cd_temporal_covariate_value
+  description: Results data table cd_temporal_covariate_value.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: time_id
+    type: int
+    description: time identifier
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: covariate identifier
+    is_primary_key: yes
+  - name: sum_value
+    type: float
+    description: sum value (documented from legacy CSV model).
+    is_primary_key: no
+  - name: mean
+    type: float
+    description: mean (documented from legacy CSV model).
+    is_primary_key: no
+  - name: sd
+    type: float
+    description: standard deviation
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: cd_temporal_covariate_value_dist
+  description: Results data table cd_temporal_covariate_value_dist.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: time_id
+    type: int
+    description: time identifier
+    is_primary_key: yes
+  - name: covariate_id
+    type: bigint
+    description: covariate identifier
+    is_primary_key: yes
+  - name: count_value
+    type: float
+    description: count (documented from legacy CSV model).
+    is_primary_key: no
+  - name: min_value
+    type: float
+    description: minimum value
+    is_primary_key: no
+  - name: max_value
+    type: float
+    description: maximum value
+    is_primary_key: no
+  - name: mean
+    type: float
+    description: mean value (documented from legacy CSV model).
+    is_primary_key: no
+  - name: sd
+    type: float
+    description: standard deviation
+    is_primary_key: no
+  - name: median_value
+    type: float
+    description: median (value at 50%)
+    is_primary_key: no
+  - name: p_10_value
+    type: float
+    description: value at 10%
+    is_primary_key: no
+  - name: p_25_value
+    type: float
+    description: value at 25%
+    is_primary_key: no
+  - name: p_75_value
+    type: float
+    description: value at 75%
+    is_primary_key: no
+  - name: p_90_value
+    type: float
+    description: value at 90%
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: cd_temporal_time_ref
+  description: Results data table cd_temporal_time_ref.
+  fields:
+  - name: time_id
+    type: int
+    description: time identifier
+    is_primary_key: yes
+  - name: start_day
+    type: float
+    description: start day (documented from legacy CSV model).
+    is_primary_key: no
+  - name: end_day
+    type: float
+    description: end day (documented from legacy CSV model).
+    is_primary_key: no
+- name: cd_time_series
+  description: Results data table cd_time_series.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: no
+    references: database_meta_data.database_id
+  - name: period_begin
+    type: Date
+    description: peroid start date
+    is_primary_key: no
+  - name: period_end
+    type: Date
+    description: perioid end date
+    is_primary_key: no
+  - name: series_type
+    type: varchar
+    description: time series type
+    is_primary_key: no
+  - name: calendar_interval
+    type: varchar
+    description: calendar interval
+    is_primary_key: no
+  - name: gender
+    type: varchar
+    description: gender grouping
+    is_primary_key: no
+  - name: age_group
+    type: varchar
+    description: age grouping
+    is_primary_key: no
+  - name: records
+    type: bigint
+    description: record count
+    is_primary_key: no
+  - name: subjects
+    type: bigint
+    description: distinct person count
+    is_primary_key: no
+  - name: person_days
+    type: bigint
+    description: total person time in days
+    is_primary_key: no
+  - name: person_days_in
+    type: bigint
+    description: total person time in days
+    is_primary_key: no
+  - name: records_start
+    type: bigint
+    description: records at start
+    is_primary_key: no
+  - name: subjects_start
+    type: bigint
+    description: subject count at start
+    is_primary_key: no
+  - name: subjects_start_in
+    type: bigint
+    description: subject out at start
+    is_primary_key: no
+  - name: records_end
+    type: bigint
+    description: records end (documented from legacy CSV model).
+    is_primary_key: no
+  - name: subjects_end
+    type: bigint
+    description: subjects end
+    is_primary_key: no
+  - name: subjects_end_in
+    type: bigint
+    description: subjects end in
+    is_primary_key: no
+- name: cd_visit_context
+  description: Results data table cd_visit_context.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: cohort identifier
+    is_primary_key: yes
+  - name: visit_concept_id
+    type: bigint
+    description: visit concept identifier
+    is_primary_key: yes
+  - name: visit_context
+    type: varchar
+    description: name of visit context
+    is_primary_key: yes
+  - name: subjects
+    type: float
+    description: number of subjects
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: database identifier
+    is_primary_key: yes
+    references: database_meta_data.database_id
+- name: cd_vocabulary
+  description: Results data table cd_vocabulary.
+  fields:
+  - name: vocabulary_id
+    type: varchar(50)
+    description: vocabulary identifier
+    is_primary_key: no
+  - name: vocabulary_name
+    type: varchar(255)
+    description: vocabulary name
+    is_primary_key: no
+  - name: vocabulary_reference
+    type: varchar
+    description: vocabulary reference
+    is_primary_key: no
+  - name: vocabulary_version
+    type: varchar
+    description: vocabulary version
+    is_primary_key: no
+  - name: vocabulary_concept_id
+    type: bigint
+    description: vocabulary concept identifier
+    is_primary_key: no

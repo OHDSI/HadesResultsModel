@@ -1,0 +1,218 @@
+module: CohortIncidence
+prefix: ci_
+tables:
+- name: ci_incidence_summary
+  description: Results data table ci_incidence_summary.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: no
+  - name: database_id
+    type: varchar(255)
+    description: The database identifier
+    is_primary_key: no
+    references: database_meta_data.database_id
+  - name: source_name
+    type: varchar(255)
+    description: The source name for the database
+    is_primary_key: no
+  - name: target_cohort_definition_id
+    type: bigint
+    description: Target cohort identifier
+    is_primary_key: no
+    references: cg_cohort_definition.cohort_definition_id
+  - name: tar_id
+    type: bigint
+    description: Time-at-risk identifier
+    is_primary_key: no
+  - name: subgroup_id
+    type: bigint
+    description: Subgroup identifier
+    is_primary_key: no
+  - name: outcome_id
+    type: bigint
+    description: Outcome cohort identifier
+    is_primary_key: no
+  - name: age_group_id
+    type: int
+    description: Age group identifier
+    is_primary_key: no
+  - name: gender_id
+    type: int
+    description: Gender identifier
+    is_primary_key: no
+  - name: gender_name
+    type: varchar(255)
+    description: Gender name (documented from legacy CSV model).
+    is_primary_key: no
+  - name: start_year
+    type: int
+    description: Start year (documented from legacy CSV model).
+    is_primary_key: no
+  - name: persons_at_risk_pe
+    type: bigint
+    description: Persons at risk pre-exclude (counts before excluding time at risk)
+    is_primary_key: no
+  - name: persons_at_risk
+    type: bigint
+    description: Persons at risk
+    is_primary_key: no
+  - name: person_days_pe
+    type: bigint
+    description: Person days pre-exclude (counts before excluding time at risk)
+    is_primary_key: no
+  - name: person_days
+    type: bigint
+    description: Person days (documented from legacy CSV model).
+    is_primary_key: no
+  - name: person_outcomes_pe
+    type: bigint
+    description: Person outcomes pre-exclude (counts before excluding time at risk)
+    is_primary_key: no
+  - name: person_outcomes
+    type: bigint
+    description: Person outcomes
+    is_primary_key: no
+  - name: outcomes_pe
+    type: bigint
+    description: Outcomes pre-exclude (counts before excluding time at risk)
+    is_primary_key: no
+  - name: outcomes
+    type: bigint
+    description: Outcomes (documented from legacy CSV model).
+    is_primary_key: no
+  - name: incidence_proportion_p100p
+    type: float
+    description: Incidence proportion (person_outcomes / persons_at_risk) per 100
+      people
+    is_primary_key: no
+  - name: incidence_rate_p100py
+    type: float
+    description: Incidence rate (outcomes / time_at_risk) per 100 person years
+    is_primary_key: no
+- name: ci_target_def
+  description: Results data table ci_target_def.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: target_cohort_definition_id
+    type: bigint
+    description: Target cohort identifier
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: target_name
+    type: varchar(255)
+    description: Target cohort name
+    is_primary_key: no
+- name: ci_outcome_def
+  description: Results data table ci_outcome_def.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: outcome_id
+    type: bigint
+    description: Outcome identifier
+    is_primary_key: yes
+  - name: outcome_cohort_definition_id
+    type: bigint
+    description: Outcome cohort identifier
+    is_primary_key: no
+    references: cg_cohort_definition.cohort_definition_id
+  - name: outcome_name
+    type: varchar(255)
+    description: Outcome name
+    is_primary_key: no
+  - name: clean_window
+    type: bigint
+    description: Clean window
+    is_primary_key: no
+  - name: excluded_cohort_definition_id
+    type: bigint
+    description: Excluded cohort identifier
+    is_primary_key: no
+    references: cg_cohort_definition.cohort_definition_id
+- name: ci_tar_def
+  description: Results data table ci_tar_def.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: tar_id
+    type: bigint
+    description: Time-at-risk identifier
+    is_primary_key: yes
+  - name: tar_start_with
+    type: varchar(10)
+    description: Time-at-risk start anchor
+    is_primary_key: no
+  - name: tar_start_offset
+    type: bigint
+    description: Time-at-risk start offset in days
+    is_primary_key: no
+  - name: tar_end_with
+    type: varchar(10)
+    description: Time-at-risk end anchor
+    is_primary_key: no
+  - name: tar_end_offset
+    type: bigint
+    description: Time-at-risk end offset in days
+    is_primary_key: no
+- name: ci_age_group_def
+  description: Results data table ci_age_group_def.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: age_group_id
+    type: int
+    description: Age group identifier
+    is_primary_key: yes
+  - name: age_group_name
+    type: varchar(255)
+    description: Age group name
+    is_primary_key: no
+  - name: min_age
+    type: int
+    description: Minimum age (documented from legacy CSV model).
+    is_primary_key: no
+  - name: max_age
+    type: int
+    description: Maximum age (documented from legacy CSV model).
+    is_primary_key: no
+- name: ci_subgroup_def
+  description: Results data table ci_subgroup_def.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: subgroup_id
+    type: bigint
+    description: The subgroup identifier
+    is_primary_key: yes
+  - name: subgroup_name
+    type: varchar(255)
+    description: The subgroup name
+    is_primary_key: no
+- name: ci_target_outcome_ref
+  description: Results data table ci_target_outcome_ref.
+  fields:
+  - name: ref_id
+    type: int
+    description: The reference identifier for the analysis
+    is_primary_key: yes
+  - name: target_cohort_id
+    type: bigint
+    description: The target cohort identifier
+    is_primary_key: yes
+  - name: outcome_cohort_id
+    type: bigint
+    description: The outcome cohort identifier
+    is_primary_key: yes
