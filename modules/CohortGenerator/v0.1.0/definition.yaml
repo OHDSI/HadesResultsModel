@@ -1,0 +1,302 @@
+module: CohortGenerator
+prefix: cg_
+tables:
+- name: cg_cohort_definition
+  description: Results data table cg_cohort_definition.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: cohort_name
+    type: varchar
+    description: The name of the cohort definition
+    is_primary_key: no
+  - name: description
+    type: varchar
+    description: A description of the cohort definition
+    is_primary_key: no
+  - name: json
+    type: text
+    description: The circe-be compiliant JSON expression
+    is_primary_key: no
+  - name: sql_command
+    type: text
+    description: The OHDSI-SQL command used to construct the cohort
+    is_primary_key: no
+  - name: subset_parent
+    type: bigint
+    description: The parent cohort id if this cohort is a subset
+    is_primary_key: no
+  - name: is_subset
+    type: int
+    description: This value is 1 when the cohort is a subset
+    is_primary_key: no
+  - name: is_templated_cohort
+    type: int
+    description: This value is 1 when the cohort is based on an sql template
+    is_primary_key: no
+  - name: subset_definition_id
+    type: bigint
+    description: The cohort subset definition
+    is_primary_key: no
+- name: cg_cohort_generation
+  description: Results data table cg_cohort_generation.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The uniqe identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: generation_status
+    type: varchar
+    description: The cohort generation status
+    is_primary_key: no
+  - name: start_time
+    type: Timestamp
+    description: The start time of the generation process
+    is_primary_key: no
+  - name: end_time
+    type: Timestamp
+    description: The end time of the generation process
+    is_primary_key: no
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: checksum
+    type: varchar
+    description: Checksum of the cohort
+    is_primary_key: no
+- name: cg_cohort_inclusion
+  description: Results data table cg_cohort_inclusion.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: rule_sequence
+    type: int
+    description: The rule sequence for the inclusion rule
+    is_primary_key: yes
+  - name: name
+    type: varchar
+    description: The name of the inclusion rule
+    is_primary_key: yes
+  - name: description
+    type: varchar
+    description: The description of the inclusion rule
+    is_primary_key: no
+- name: cg_cohort_inc_result
+  description: Results data table cg_cohort_inc_result.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: inclusion_rule_mask
+    type: int
+    description: A bit-mask for the inclusion rule
+    is_primary_key: yes
+  - name: person_count
+    type: bigint
+    description: The number of persons satisifying the inclusion rule
+    is_primary_key: yes
+  - name: mode_id
+    type: int
+    description: The mode of the inclusion rule.
+    is_primary_key: yes
+- name: cg_cohort_inc_stats
+  description: Results data table cg_cohort_inc_stats.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: rule_sequence
+    type: int
+    description: The rule sequence
+    is_primary_key: yes
+  - name: person_count
+    type: bigint
+    description: The person count
+    is_primary_key: yes
+  - name: gain_count
+    type: bigint
+    description: The gain count
+    is_primary_key: yes
+  - name: person_total
+    type: bigint
+    description: The person total
+    is_primary_key: yes
+  - name: mode_id
+    type: int
+    description: The mode id (documented from legacy CSV model).
+    is_primary_key: yes
+- name: cg_cohort_summary_stats
+  description: Results data table cg_cohort_summary_stats.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: base_count
+    type: bigint
+    description: The base count
+    is_primary_key: yes
+  - name: final_count
+    type: bigint
+    description: The final count
+    is_primary_key: yes
+  - name: mode_id
+    type: int
+    description: The mode id (documented from legacy CSV model).
+    is_primary_key: yes
+- name: cg_cohort_censor_stats
+  description: Results data table cg_cohort_censor_stats.
+  fields:
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id
+  - name: lost_count
+    type: bigint
+    description: The number lost due to censoring
+    is_primary_key: yes
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+- name: cg_cohort_count
+  description: Results data table cg_cohort_count.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+  - name: cohort_entries
+    type: bigint
+    description: The number of cohort entries
+    is_primary_key: yes
+  - name: cohort_subjects
+    type: bigint
+    description: The number of unique subjects
+    is_primary_key: yes
+- name: cg_cohort_count_neg_ctrl
+  description: Results data table cg_cohort_count_neg_ctrl.
+  fields:
+  - name: database_id
+    type: varchar
+    description: The database idenifier for this information
+    is_primary_key: yes
+    references: database_meta_data.database_id
+  - name: cohort_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+  - name: cohort_entries
+    type: bigint
+    description: The number of cohort entries
+    is_primary_key: yes
+  - name: cohort_subjects
+    type: bigint
+    description: The number of unique subjects
+    is_primary_key: yes
+- name: cg_cohort_subset_definition
+  description: Results data table cg_cohort_subset_definition.
+  fields:
+  - name: subset_definition_id
+    type: bigint
+    description: The identifier for the cohort subset definition
+    is_primary_key: yes
+  - name: json
+    type: text
+    description: The JSON representation of the subset definition
+    is_primary_key: no
+- name: cg_cohort_definition_neg_ctrl
+  description: Results data table cg_cohort_definition_neg_ctrl.
+  fields:
+  - name: cohort_id
+    type: bigint
+    description: The cohort identifier for the negative control outcome
+    is_primary_key: yes
+  - name: outcome_concept_id
+    type: bigint
+    description: The concept ID for the negative control outcome
+    is_primary_key: no
+  - name: cohort_name
+    type: varchar
+    description: The concept name for the negative control outcome
+    is_primary_key: no
+  - name: occurrence_type
+    type: varchar
+    description: 'The occurrenceType will detect either: the first time an outcomeConceptId
+      occurs or all times the outcome_concept_id occurs for a person. Values accepted:
+      ''all'' or ''first'''
+    is_primary_key: no
+  - name: detect_on_descendants
+    type: int
+    description: When set to 1 detect_on_descendants used the vocabulary to find negative
+      control outcomes using the outcome_concept_id and all descendants via the concept_ancestor
+      table. When set to 0 only the exact outcome_concept_id was used to detect the
+      outcome
+    is_primary_key: no
+- name: cg_cohort_template_definition
+  description: Results data table cg_cohort_template_definition.
+  fields:
+  - name: template_definition_id
+    type: varchar
+    description: cohort template definition identifier
+    is_primary_key: yes
+  - name: json
+    type: text
+    description: The template JSON expression including references and sql. Only needed
+      to reconsturct a template
+    is_primary_key: no
+  - name: template_sql
+    type: text
+    description: The template sql expression
+    is_primary_key: no
+  - name: template_name
+    type: text
+    description: The template name
+    is_primary_key: no
+- name: cg_cohort_template_link
+  description: Results data table cg_cohort_template_link.
+  fields:
+  - name: template_definition_id
+    type: varchar
+    description: cohort template definition identifier
+    is_primary_key: yes
+  - name: cohort_definition_id
+    type: bigint
+    description: The unique identifier for the cohort definition
+    is_primary_key: yes
+    references: cg_cohort_definition.cohort_definition_id

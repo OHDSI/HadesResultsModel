@@ -68,6 +68,14 @@ Ecosystem releases use calendar versioning:
 - Release manifest file: `releases/release_vYYYY_QX.yaml`
 - Holistic SQL file: `sql/hades_results_vYYYY_QX.sql`
 
+## Migration And Version Upgrades
+
+Module upgrades may include migration SQL for moving from an older version to a newer one.
+
+- Migration scripts are stored alongside the target module version, for example `modules/CohortGenerator/v1.0.0/migration.sql`.
+- The migration SQL is OHDSI SQL and can be translated with SqlRender before execution.
+- Major version upgrades should remove deprecated fields and may add new tables or columns through migration scripts.
+
 ## For Maintainers
 
 Operational workflows are documented in [MAINTAINER.md](MAINTAINER.md), including:

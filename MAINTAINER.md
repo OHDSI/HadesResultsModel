@@ -34,6 +34,20 @@ For consumer-facing usage and model structure, see [README.md](README.md).
 - Keep cross-module references limited to:
   - `cg_cohort_definition.cohort_definition_id`
   - `database_meta_data.database_id`
+- Migration policy:
+  - Minor and micro releases may retain deprecated fields and mark them as `deprecated: true`.
+  - Major releases must remove deprecated fields from the YAML module definition.
+  - Module migrations should be written as OHDSI SQL and translated with SqlRender when validated or executed.
+
+## Migration Script Convention
+
+Use a migration script when moving from one module version to the next.
+
+- Store the migration alongside the target version, for example `modules/<ModuleName>/v1.2.0/migration.sql`.
+- Write the migration in OHDSI SQL so it can be translated with SqlRender.
+- The script should transform the prior version's schema into the new version's schema.
+- The CI test scans every module folder, requires a migration script for every non-initial version, and executes the rendered SQL against DuckDB.
+- Keep migrations additive and explicit where possible so the schema transition remains easy to validate.
 
 ## Convert Legacy CSVs To YAML
 
@@ -58,11 +72,12 @@ Behavior:
 - `jsonlite`
 - `DBI`
 - `duckdb`
+- `SqlRender`
 
 Install:
 
 ```bash
-Rscript -e "install.packages(c('testthat','yaml','jsonvalidate','jsonlite','DBI','duckdb'), repos='https://cloud.r-project.org')"
+Rscript -e "install.packages(c('testthat','yaml','jsonvalidate','jsonlite','DBI','duckdb','SqlRender'), repos='https://cloud.r-project.org')"
 ```
 
 ## Calendar-Version Release Process

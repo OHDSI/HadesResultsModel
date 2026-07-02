@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
   library(jsonlite)
   library(DBI)
   library(duckdb)
+  library(SqlRender)
 })
 
 find_repo_path <- function(relative_path) {
@@ -44,6 +45,20 @@ release_version_rank <- function(version_string) {
   year <- as.integer(sub("^v([0-9]{4})_Q[1-4]$", "\\1", version_string))
   quarter <- as.integer(sub("^v[0-9]{4}_Q([1-4])$", "\\1", version_string))
   (year * 10L) + quarter
+}
+
+semver_sort_key <- function(version_string) {
+  parts <- as.integer(strsplit(sub("^v", "", version_string), "\\.")[[1]])
+  sprintf("%09d.%09d.%09d", parts[[1]], parts[[2]], parts[[3]])
+}
+
+list_module_versions <- function(module_dir) {
+  versions <- list.dirs(module_dir, recursive = FALSE, full.names = FALSE)
+  versions <- versions[grepl("^v[0-9]+\\.[0-9]+\\.[0-9]+$", versions)]
+  if (length(versions) == 0) {
+    return(character(0))
+  }
+  versions[order(vapply(versions, semver_sort_key, character(1)))]
 }
 
 find_latest_release_manifest <- function(releases_dir) {
@@ -296,4 +311,117 @@ test_that("Latest release manifest generates holistic DDL executable in DuckDB",
 
     expect_true(exec_ok, info = paste("Failed executing release SQL statement:", exec_err))
   }
+})
+
+test_that("Every version after the first has a migration script that transforms the prior schema", {
+  skip_if_not(dir.exists(modules_path), "modules/ directory not found")
+
+  module_dirs <- list.dirs(modules_path, recursive = FALSE, full.names = TRUE)
+  skip_if(length(module_dirs) == 0, "No module directories found under modules/")
+
+  migration_checks <- 0L
+
+  for (module_dir in module_dirs) {
+    module_name <- basename(module_dir)
+    version_dirs <- list_module_versions(module_dir)
+    if (length(version_dirs) < 2) {
+      next
+    }
+
+    for (i in 2:length(version_dirs)) {
+      migration_checks <- migration_checks + 1L
+      prior_version <- version_dirs[[i - 1]]
+      current_version <- version_dirs[[i]]
+
+      prior_definition_file <- file.path(module_dir, prior_version, "definition.yaml")
+      current_definition_file <- file.path(module_dir, current_version, "definition.yaml")
+      migration_file <- file.path(module_dir, current_version, "migration.sql")
+
+      expect_true(
+        file.exists(migration_file),
+        info = sprintf("Missing migration script for %s %s -> %s", module_name, prior_version, current_version)
+      )
+      expect_true(
+        file.exists(prior_definition_file),
+        info = sprintf("Missing prior definition for %s %s", module_name, prior_version)
+      )
+      expect_true(
+        file.exists(current_definition_file),
+        info = sprintf("Missing current definition for %s %s", module_name, current_version)
+      )
+
+      prior_definition <- yaml::read_yaml(prior_definition_file)
+      current_definition <- yaml::read_yaml(current_definition_file)
+      prior_tables <- vapply(prior_definition$tables, function(tbl) tbl$name, character(1))
+      current_tables <- vapply(current_definition$tables, function(tbl) tbl$name, character(1))
+
+      migration_sql <- paste(readLines(migration_file, warn = FALSE), collapse = "\n")
+      rendered_sql <- SqlRender::render(
+        migration_sql,
+        database_schema = "main"
+      )
+
+      con <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
+      tryCatch({
+        shared_tables <- c("cg_cohort_definition", "database_meta_data")
+        prior_creation_tables <- unique(c(shared_tables, prior_tables))
+
+        for (table_name in prior_creation_tables) {
+          table_def <- if (table_name %in% prior_tables) {
+            prior_definition$tables[[match(table_name, prior_tables)]]
+          } else {
+            list(
+              name = table_name,
+              fields = list(
+                list(name = if (table_name == "cg_cohort_definition") "cohort_definition_id" else "database_id", type = if (table_name == "cg_cohort_definition") "BIGINT" else "VARCHAR", is_primary_key = TRUE)
+              )
+            )
+          }
+
+          DBI::dbExecute(con, build_create_table_sql(table_def, shared_tables))
+        }
+
+        DBI::dbExecute(con, rendered_sql)
+
+        tables_after_migration <- DBI::dbGetQuery(
+          con,
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main' ORDER BY table_name"
+        )$table_name
+
+        expect_true(
+          all(current_tables %in% tables_after_migration),
+          info = sprintf("Migration %s %s -> %s did not create all expected tables", module_name, prior_version, current_version)
+        )
+
+        for (table_def in current_definition$tables) {
+          expected_columns <- vapply(table_def$fields, function(field) field$name, character(1))
+          actual_columns <- DBI::dbGetQuery(
+            con,
+            sprintf(
+              "SELECT column_name FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '%s' ORDER BY ordinal_position",
+              table_def$name
+            )
+          )$column_name
+
+          expect_true(
+            setequal(expected_columns, actual_columns),
+            info = sprintf(
+              "Migration %s %s -> %s produced wrong columns for table %s",
+              module_name,
+              prior_version,
+              current_version,
+              table_def$name
+            )
+          )
+        }
+      }, finally = {
+        DBI::dbDisconnect(con, shutdown = TRUE)
+      })
+    }
+  }
+
+  expect_true(
+    migration_checks > 0L,
+    info = "No module versions with prior versions were found to test migrations"
+  )
 })

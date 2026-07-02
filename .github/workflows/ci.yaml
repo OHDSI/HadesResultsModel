@@ -19,7 +19,7 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          Rscript -e 'install.packages(c("testthat", "yaml", "jsonvalidate", "jsonlite", "DBI", "duckdb"), repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'install.packages(c("testthat", "yaml", "jsonvalidate", "jsonlite", "DBI", "duckdb", "SqlRender"), repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
 
       - name: Run testthat suite
         run: |

@@ -24,9 +24,9 @@ latest_semver <- function(module_dir) {
     return(NA_character_)
   }
 
-  parsed <- lapply(sub("^v", "", versions), package_version)
-  ord <- order(parsed)
-  versions[[ord[[length(ord)]]]]
+  parsed <- package_version(sub("^v", "", versions))
+  latest <- max(parsed)
+  versions[[which(parsed == latest)[1]]]
 }
 
 module_dirs <- list.dirs(module_root, recursive = FALSE, full.names = TRUE)
