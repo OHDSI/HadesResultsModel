@@ -1,0 +1,14 @@
+release_version: v2026_Q3
+release_date: '2026-07-02'
+modules:
+  Characterization: v1.0.0
+  CohortDiagnostics: v1.0.0
+  CohortGenerator: v1.0.0
+  CohortIncidence: v1.0.0
+  CohortMethod: v1.0.0
+  DatabaseMetaData: v1.0.0
+  EvidenceSynthesis: v1.0.0
+  PatientLevelPrediction: v1.0.0
+  SelfControlledCaseSeries: v1.0.0
+  SelfControlledCohort: v1.0.0
+  TreatmentPatterns: v1.0.0

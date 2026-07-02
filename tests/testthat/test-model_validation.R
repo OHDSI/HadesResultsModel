@@ -22,7 +22,12 @@ find_repo_path <- function(relative_path) {
 }
 
 schema_path <- find_repo_path(file.path("schemas", "hades_schema.json"))
+release_schema_path <- find_repo_path(file.path("schemas", "release_manifest_schema.json"))
 modules_path <- find_repo_path("modules")
+repo_root <- dirname(modules_path)
+releases_path <- file.path(repo_root, "releases")
+scripts_path <- file.path(repo_root, "scripts")
+sql_path <- file.path(repo_root, "sql")
 
 yaml_files <- if (dir.exists(modules_path)) {
   list.files(
@@ -33,6 +38,31 @@ yaml_files <- if (dir.exists(modules_path)) {
   )
 } else {
   character(0)
+}
+
+release_version_rank <- function(version_string) {
+  year <- as.integer(sub("^v([0-9]{4})_Q[1-4]$", "\\1", version_string))
+  quarter <- as.integer(sub("^v[0-9]{4}_Q([1-4])$", "\\1", version_string))
+  (year * 10L) + quarter
+}
+
+find_latest_release_manifest <- function(releases_dir) {
+  if (!dir.exists(releases_dir)) {
+    return(NA_character_)
+  }
+
+  release_files <- list.files(
+    releases_dir,
+    pattern = "^release_v[0-9]{4}_Q[1-4]\\.ya?ml$",
+    full.names = TRUE
+  )
+  if (length(release_files) == 0) {
+    return(NA_character_)
+  }
+
+  versions <- sub("^release_(v[0-9]{4}_Q[1-4])\\.ya?ml$", "\\1", basename(release_files))
+  ranks <- vapply(versions, release_version_rank, integer(1))
+  release_files[[which.max(ranks)]]
 }
 
 test_that("All module YAML files validate against JSON Schema", {
@@ -193,5 +223,77 @@ test_that("Module YAML definitions compile to DuckDB DDL", {
         info = paste("Failed to execute DDL for table", tbl$name, exec_err)
       )
     }
+  }
+})
+
+test_that("Latest release manifest generates holistic DDL executable in DuckDB", {
+  skip_if_not(file.exists(release_schema_path), "Release manifest schema file not found")
+
+  build_release_script <- file.path(scripts_path, "build_latest_release.R")
+  generate_ddl_script <- file.path(scripts_path, "generate_release_ddl.R")
+
+  skip_if_not(file.exists(build_release_script), "build_latest_release.R not found")
+  skip_if_not(file.exists(generate_ddl_script), "generate_release_ddl.R not found")
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(repo_root)
+
+  source(build_release_script, local = new.env(parent = baseenv()))
+
+  latest_manifest_file <- find_latest_release_manifest(releases_path)
+  skip_if(is.na(latest_manifest_file), "No release manifests found after build")
+
+  manifest <- yaml::read_yaml(latest_manifest_file)
+  manifest_json <- jsonlite::toJSON(manifest, auto_unbox = TRUE, null = "null", pretty = FALSE)
+  schema_valid <- jsonvalidate::json_validate(
+    json = manifest_json,
+    schema = release_schema_path,
+    engine = "ajv",
+    error = FALSE,
+    verbose = TRUE
+  )
+
+  schema_errors <- attr(schema_valid, "errors")
+  schema_error_message <- if (is.null(schema_errors) || length(schema_errors) == 0) {
+    ""
+  } else {
+    paste(schema_errors, collapse = " | ")
+  }
+
+  expect_true(
+    isTRUE(schema_valid),
+    info = paste("Release manifest schema validation failed for", latest_manifest_file, schema_error_message)
+  )
+
+  source(generate_ddl_script, local = new.env(parent = baseenv()))
+
+  latest_version <- sub("^release_(v[0-9]{4}_Q[1-4])\\.ya?ml$", "\\1", basename(latest_manifest_file))
+  sql_file <- file.path(sql_path, sprintf("hades_results_%s.sql", latest_version))
+  expect_true(file.exists(sql_file), info = paste("Expected generated SQL file not found:", sql_file))
+
+  sql_lines <- readLines(sql_file, warn = FALSE)
+  sql_lines <- sql_lines[!grepl("^\\s*--", sql_lines)]
+  sql_text <- paste(sql_lines, collapse = "\n")
+  statements <- unlist(strsplit(sql_text, ";", fixed = TRUE))
+  statements <- trimws(statements)
+  statements <- statements[nzchar(statements)]
+  statements <- statements[!grepl("^--", statements)]
+
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  for (stmt in statements) {
+    exec_ok <- TRUE
+    exec_err <- ""
+    tryCatch(
+      DBI::dbExecute(con, paste0(stmt, ";")),
+      error = function(e) {
+        exec_ok <<- FALSE
+        exec_err <<- conditionMessage(e)
+      }
+    )
+
+    expect_true(exec_ok, info = paste("Failed executing release SQL statement:", exec_err))
   }
 })

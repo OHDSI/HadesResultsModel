@@ -1,21 +1,30 @@
 # HADES Results Model Repository
 
-This repository centralizes OHDSI HADES results data model definitions in versioned YAML modules.
+This repository centralizes OHDSI HADES results data model definitions as versioned YAML modules for the OHDSI HADES ecosystem.
 
-It replaces fragmented, package-specific CSV specifications with:
+It provides:
 
-- A consistent module format in YAML
-- A JSON Schema for structural validation
-- Automated tests that compile definitions into DuckDB DDL
-- CI checks on pull requests
+- Versioned, package-scoped schema modules
+- A consistent YAML structure across packages
+- JSON Schema validation for module definitions
+- Calendar-versioned ecosystem release manifests
+- Generated holistic SQL DDL per ecosystem release
+
+## Quick Start
+
+1. Read module definitions in `modules/<ModuleName>/v<semver>/definition.yaml`.
+2. Use ecosystem release manifests in `releases/release_vYYYY_QX.yaml`.
+3. Use generated DDL in `sql/hades_results_vYYYY_QX.sql`.
 
 ## Repository Layout
 
 - `current_csvs/`: legacy source CSV files and source mapping notes
 - `modules/`: versioned YAML definitions, one module per package
 - `schemas/`: JSON Schema used to validate YAML definitions
-- `scripts/`: ingestion and conversion scripts
-- `tests/testthat/`: R test suite for schema and DDL validation
+- `releases/`: ecosystem release manifests (`release_vYYYY_QX.yaml`)
+- `sql/`: generated holistic ecosystem DDL files (`hades_results_vYYYY_QX.sql`)
+- `scripts/`: repository utility scripts
+- `tests/testthat/`: validation tests
 - `.github/workflows/`: CI workflows
 
 ## YAML Module Shape
@@ -51,57 +60,20 @@ Only the following shared references are allowed:
 - `cg_cohort_definition.cohort_definition_id`
 - `database_meta_data.database_id`
 
-## Convert Legacy CSVs to YAML
+## Calendar Versioning
 
-Run:
+Ecosystem releases use calendar versioning:
 
-```bash
-Rscript scripts/convert_csvs_to_yaml.R
-```
+- Format: `vYYYY_QX` (for example `v2026_Q3`)
+- Release manifest file: `releases/release_vYYYY_QX.yaml`
+- Holistic SQL file: `sql/hades_results_vYYYY_QX.sql`
 
-What the converter does:
+## For Maintainers
 
-1. Reads `current_csvs/README.md` for package-prefix mapping
-2. Iterates all CSVs under `current_csvs/`
-3. Detects key columns dynamically across header variants
-4. Normalizes table names with prefix rules
-5. Writes module definitions to `modules/<Package>/v1.0.0/definition.yaml`
+Operational workflows are documented in [MAINTAINER.md](MAINTAINER.md), including:
 
-## Validation and Tests
-
-Run tests locally:
-
-```bash
-Rscript -e "testthat::test_dir('tests/testthat', reporter='summary')"
-```
-
-The suite checks:
-
-- All YAML files validate against `schemas/hades_schema.json`
-- Generated DDL executes in an in-memory DuckDB instance
-
-## Required R Packages
-
-- `testthat`
-- `yaml`
-- `jsonvalidate`
-- `jsonlite`
-- `DBI`
-- `duckdb`
-
-Install:
-
-```bash
-Rscript -e "install.packages(c('testthat','yaml','jsonvalidate','jsonlite','DBI','duckdb'), repos='https://cloud.r-project.org')"
-```
-
-## CI
-
-The workflow in `.github/workflows/ci.yaml` runs on pull requests targeting `main` and executes the full `testthat` suite.
-
-## Contribution Notes
-
-- Keep module versions immutable once released.
-- Add new module changes in a new version folder. Add both a new YAML and an OHDSI SQL script for migrating from the previous vserion.
-- Ensure every table and field has meaningful descriptions.
-- Keep cross-module references limited to the shared dependencies listed above.
+- CSV-to-YAML conversion
+- Dependency setup
+- Release manifest generation
+- Holistic DDL generation
+- Test and CI workflow
