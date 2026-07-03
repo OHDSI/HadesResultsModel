@@ -189,8 +189,8 @@ tables:
     type: text
     description: the json with the settings
     is_primary_key: no
-- name: plp_data_settings
-  description: Results data table plp_data_settings.
+- name: plp_plp_data_settings
+  description: Results data table plp_plp_data_settings.
   fields:
   - name: plp_data_setting_id
     type: int

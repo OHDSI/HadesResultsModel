@@ -1652,9 +1652,9 @@ Results data table plp_split_settings.
 | split_setting_id | int | a unique identifier for the split settings | Yes |
 | split_settings_json | text | the json with the settings | No |
 
-#### plp_data_settings
+#### plp_plp_data_settings
 
-Results data table plp_data_settings.
+Results data table plp_plp_data_settings.
 
 | Name | Type | Description | Primary Key |
 |:---|:---|:---|:---|

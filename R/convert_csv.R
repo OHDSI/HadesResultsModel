@@ -84,7 +84,6 @@ csvInferAddPrefix <- function(tableNames, prefix) {
 csvNormalizeTableName <- function(tableName, prefix, addPrefix) {
   tableName <- csvToSnakeCase(tableName)
   if (!addPrefix) return(tableName)
-  if (startsWith(tableName, prefix)) return(tableName)
   paste0(prefix, tableName)
 }
 

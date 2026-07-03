@@ -25,8 +25,12 @@
   schema.
 - [`migrateResultsModel()`](https://ohdsi.github.io/HadesResultsModel/reference/migrateResultsModel.md)
   : Migrate a HADES results database to a target calendar release.
+- [`print(`*`<ValidationResult>`*`)`](https://ohdsi.github.io/HadesResultsModel/reference/print.ValidationResult.md)
+  : Print method for ValidationResult objects
 - [`testMigrationSql()`](https://ohdsi.github.io/HadesResultsModel/reference/testMigrationSql.md)
   : Test that a migration SQL file correctly transforms a module schema
+- [`validateDatabase()`](https://ohdsi.github.io/HadesResultsModel/reference/validateDatabase.md)
+  : Validate a database schema against a HADES results model release
 - [`yamlDefinitionToSql()`](https://ohdsi.github.io/HadesResultsModel/reference/yamlDefinitionToSql.md)
   : Convert a module YAML definition to OHDSI SQL CREATE TABLE
   statements

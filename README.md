@@ -20,6 +20,9 @@ This repository follows the standard R package structure. Model resources live u
 - `inst/schemas/`: JSON Schemas used for validation
 - `inst/sql/`: generated holistic SQL output (working/output directory)
 
+### Example data
+
+Example data can be found in `examples/`.
 
 ## Example: Migrating a results database to the latest version
 

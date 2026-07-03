@@ -19,7 +19,9 @@
 <url><loc>https://ohdsi.github.io/HadesResultsModel/reference/index.html</loc></url>
 <url><loc>https://ohdsi.github.io/HadesResultsModel/reference/inferCurrentVersions.html</loc></url>
 <url><loc>https://ohdsi.github.io/HadesResultsModel/reference/migrateResultsModel.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/print.ValidationResult.html</loc></url>
 <url><loc>https://ohdsi.github.io/HadesResultsModel/reference/testMigrationSql.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/validateDatabase.html</loc></url>
 <url><loc>https://ohdsi.github.io/HadesResultsModel/reference/yamlDefinitionToSql.html</loc></url>
 </urlset>
 

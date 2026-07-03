@@ -26,6 +26,10 @@ resources live under `inst/`:
 - `inst/schemas/`: JSON Schemas used for validation
 - `inst/sql/`: generated holistic SQL output (working/output directory)
 
+### Example data
+
+Example data can be found in `examples/`.
+
 ## Example: Migrating a results database to the latest version
 
 ``` r

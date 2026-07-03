@@ -79,6 +79,18 @@ findLatestReleaseManifest <- function(releases_dir) {
   release_files[[which.max(ranks)]]
 }
 
+# Source internal helpers (resolvePackageDir, latestSemVer) needed by build_latest_release.R
+for (helper_path in c(
+  "../../R/zzz-internal-helpers.R",
+  "R/zzz-internal-helpers.R",
+  system.file("../R/zzz-internal-helpers.R", package = "HadesResultsModel")
+)) {
+  if (file.exists(helper_path)) {
+    source(helper_path, local = FALSE)
+    break
+  }
+}
+
 # Source maintainer functions for testing (buildLatestRelease and helpers)
 # Try multiple path options for both development and installed package modes
 for (extras_path in c(

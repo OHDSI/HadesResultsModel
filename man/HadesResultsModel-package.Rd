@@ -8,6 +8,15 @@
 \description{
 Lightweight R package for working with OHDSI HADES results model resources, including module YAML definitions, release manifests, JSON schemas, and migration and DDL generation utilities.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://ohdsi.github.io/HadesResultsModel/}
+  \item \url{https://github.com/OHDSI/HadesResultsModel}
+  \item Report bugs at \url{https://github.com/OHDSI/HadesResultsModel/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Martijn Schuemie \email{schuemie@ohdsi.org}
 

@@ -11,3 +11,5 @@ docs
 revdep/
 extras/
 current_csvs/
+examples/
+^.vscode
