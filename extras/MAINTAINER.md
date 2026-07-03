@@ -91,7 +91,7 @@ Behavior:
 2. Picks the latest file by year and quarter.
 3. Loads module/version mapping from that manifest.
 4. Calls `generateReleaseDdl()` to compile all tables into one SQL file.
-5. Writes/overwrites `sql/hades_results_vYYYY_QX.sql`.
+5. Writes/overwrites `inst/sql/hades_results_vYYYY_QX.sql`.
 
 ## Convert Legacy CSVs To YAML (Maintainer Script)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # Maintainer script: generate the combined OHDSI SQL DDL for the latest release
-# manifest and write it to sql/.
+# manifest and write it to inst/sql/.
 #
 # Run from the package root after loading the package:
 #   devtools::load_all()
@@ -8,7 +8,7 @@
 
 releases_root <- file.path("inst", "releases")
 modules_root  <- file.path("inst", "modules")
-sql_root      <- file.path("sql")
+sql_root      <- file.path("inst", "sql")
 
 if (!dir.exists(releases_root)) {
   stop("Expected inst/releases/ directory. Run extras/build_latest_release.R first.")

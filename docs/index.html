@@ -53,16 +53,18 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="hadesresultsmodel">HadesResultsModel<a class="anchor" aria-label="anchor" href="#hadesresultsmodel"></a>
 </h1></div>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
 <p>This repository describes the OHDSI HADES results model. These are the tables that are populated by the various HADES packages, often as part of a <a href="https://ohdsi.github.io/Strategus/" class="external-link">Strategus</a> execution. The repository also contains an R package with model resources and utilities.</p>
 <p>Here you’ll find:</p>
 <ul>
-<li>Versioned YAML definitions (per HADES package)</li>
-<li>Release manifests for quarterly ecosystem versions</li>
+<li>Versioned YAML definitions of tables and their fields (per HADES package)</li>
 <li>JSON Schemas for YAML validation</li>
+<li>Release manifests for HADES-wide versions</li>
+<li>A <a href="https://ohdsi.github.io/HadesResultsModel/articles/ResultsModelOverview.html">human-readable overview of the latest released version</a>
+</li>
 </ul>
-<div class="section level2">
-<h2 id="package-first-layout">Package-First Layout<a class="anchor" aria-label="anchor" href="#package-first-layout"></a>
-</h2>
 <p>This repository follows the standard R package structure. Model resources live under <code>inst/</code>:</p>
 <ul>
 <li>
@@ -72,23 +74,12 @@
 <li>
 <code>inst/schemas/</code>: JSON Schemas used for validation</li>
 <li>
-<code>R/</code>: package source code</li>
-<li>
-<code>man/</code>: generated function documentation</li>
-<li>
-<code>tests/testthat/</code>: validation tests</li>
-<li>
-<code>current_csvs/</code>: legacy CSV source material used for conversion/reference</li>
-<li>
-<code>sql/</code>: generated holistic SQL output (working/output directory)</li>
+<code>inst/sql/</code>: generated holistic SQL output (working/output directory)</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+<h2 id="example-migrating-a-results-database-to-the-latest-version">Example: Migrating a results database to the latest version<a class="anchor" aria-label="anchor" href="#example-migrating-a-results-database-to-the-latest-version"></a>
 </h2>
-<div class="section level3">
-<h3 id="for-end-users-database-schema-migration-and-validation">For End Users: Database Schema Migration and Validation<a class="anchor" aria-label="anchor" href="#for-end-users-database-schema-migration-and-validation"></a>
-</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/HadesResultsModel/">HadesResultsModel</a></span><span class="op">)</span></span>
 <span><span class="va">connection</span> <span class="op">&lt;-</span> <span class="fu">DatabaseConnector</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -97,118 +88,71 @@
 <span><span class="va">versions</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/inferCurrentVersions.html">inferCurrentVersions</a></span><span class="op">(</span><span class="va">connection</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Migrate database to latest versions</span></span>
-<span><span class="fu"><a href="reference/migrateResultsModel.html">migrateResultsModel</a></span><span class="op">(</span><span class="va">connection</span>, targetVersions <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>  <span class="co"># NULL = latest</span></span>
-<span></span>
-<span><span class="co"># Test a migration SQL file for correctness</span></span>
-<span><span class="fu"><a href="reference/testMigrationSql.html">testMigrationSql</a></span><span class="op">(</span></span>
-<span>  fromVersion <span class="op">=</span> <span class="st">"v0.1.0"</span>,</span>
-<span>  toVersion <span class="op">=</span> <span class="st">"v1.0.0"</span>,</span>
-<span>  fromModule <span class="op">=</span> <span class="st">"CohortGenerator"</span>,</span>
-<span>  toModule <span class="op">=</span> <span class="st">"CohortGenerator"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="for-maintainers-managing-releases-and-definitions">For Maintainers: Managing Releases and Definitions<a class="anchor" aria-label="anchor" href="#for-maintainers-managing-releases-and-definitions"></a>
-</h3>
-<p>See <a href="MAINTAINER.html">MAINTAINER.md</a> for release manifests, DDL generation, and module versioning.</p>
-</div>
+<span><span class="fu"><a href="reference/migrateResultsModel.html">migrateResultsModel</a></span><span class="op">(</span><span class="va">connection</span>, targetVersions <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>  <span class="co"># NULL = latest</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="yaml-module-shape">YAML Module Shape<a class="anchor" aria-label="anchor" href="#yaml-module-shape"></a>
+<h2 id="technology">Technology<a class="anchor" aria-label="anchor" href="#technology"></a>
 </h2>
-<p>Each module file is stored at:</p>
-<p><code>inst/modules/&lt;ModuleName&gt;/v&lt;semver&gt;/definition.yaml</code></p>
-<p>Expected top-level keys:</p>
+<p>HadesResultsModel is an R package. The data model is formatted using YAML.</p>
+</div>
+<div class="section level2">
+<h2 id="system-requirements">System Requirements<a class="anchor" aria-label="anchor" href="#system-requirements"></a>
+</h2>
+<p>Requires R (version 4.0.0 or higher) to run the package</p>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li><p>See the instructions <a href="https://ohdsi.github.io/Hades/rSetup.html" class="external-link">here</a> for configuring your R environment, including RTools and Java.</p></li>
+<li>
+<p>In R, use the following commands to download and install HadesResultsModel:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ohdsi/HadesResultsModel"</span><span class="op">)</span></span></code></pre></div>
+</li>
+</ol>
+</div>
+<div class="section level2">
+<h2 id="user-documentation">User Documentation<a class="anchor" aria-label="anchor" href="#user-documentation"></a>
+</h2>
+<p>Documentation can be found on the <a href="https://ohdsi.github.io/HadesResultsModel/">package website</a>.</p>
+<p>PDF versions of the documentation are also available:</p>
 <ul>
-<li><code>module</code></li>
-<li><code>prefix</code></li>
-<li><code>tables</code></li>
-</ul>
-<p>Each table contains:</p>
-<ul>
-<li><code>name</code></li>
-<li><code>description</code></li>
-<li><code>fields</code></li>
-</ul>
-<p>Each field contains:</p>
-<ul>
-<li><code>name</code></li>
-<li><code>type</code></li>
-<li><code>description</code></li>
-<li><code>is_primary_key</code></li>
-<li>optional <code>references</code>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/HadesResultsModel/main/inst/doc/ResultsModelOverview.pdf" class="external-link">Single studies using the HadesResultsModel package</a>
+</li>
+<li>Package manual: <a href="https://raw.githubusercontent.com/OHDSI/HadesResultsModel/main/extras/HadesResultsModel.pdf" class="external-link">HadesResultsModel.pdf</a>
 </li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="global-foreign-key-dependencies">Global Foreign Key Dependencies<a class="anchor" aria-label="anchor" href="#global-foreign-key-dependencies"></a>
+<h2 id="support">Support<a class="anchor" aria-label="anchor" href="#support"></a>
 </h2>
-<p>Only the following shared references are allowed:</p>
 <ul>
-<li><code>cg_cohort_definition.cohort_definition_id</code></li>
-<li><code>database_meta_data.database_id</code></li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="calendar-versioning">Calendar Versioning<a class="anchor" aria-label="anchor" href="#calendar-versioning"></a>
-</h2>
-<p>Ecosystem releases use calendar versioning:</p>
-<ul>
-<li>Format: <code>vYYYY_QX</code> (for example <code>v2026_Q3</code>)</li>
-<li>Release manifest file: <code>inst/releases/release_vYYYY_QX.yaml</code>
+<li>Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers" class="external-link">OHDSI Forum</a>
 </li>
-<li>Generated SQL file: <code>sql/hades_results_vYYYY_QX.sql</code>
-</li>
+<li>We use the <a href="https://github.com/OHDSI/HadesResultsModel/issues" class="external-link">GitHub issue tracker</a> for all bugs/issues/enhancements</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="migration-and-version-upgrades">Migration And Version Upgrades<a class="anchor" aria-label="anchor" href="#migration-and-version-upgrades"></a>
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
 </h2>
-<p>Module upgrades may include migration SQL for moving from an older version to a newer one.</p>
-<ul>
-<li>Migration scripts are stored alongside the target module version, for example <code>inst/modules/CohortGenerator/v1.0.0/migration.sql</code>.</li>
-<li>Migration SQL is OHDSI SQL and can be translated with SqlRender before execution.</li>
-<li>Major version upgrades should remove deprecated fields and may add new tables or columns through migration scripts.</li>
-</ul>
+<p>Read <a href="https://ohdsi.github.io/Hades/contribute.html" class="external-link">here</a> how you can contribute to this package.</p>
 </div>
 <div class="section level2">
-<h2 id="package-functions">Package Functions<a class="anchor" aria-label="anchor" href="#package-functions"></a>
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
+<p>HadesResultsModel is licensed under Apache License 2.0</p>
+</div>
+<div class="section level2">
+<h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
+</h2>
+<p>HadesResultsModel is being developed in R Studio.</p>
 <div class="section level3">
-<h3 id="user-facing-exported">User-Facing (Exported)<a class="anchor" aria-label="anchor" href="#user-facing-exported"></a>
+<h3 id="development-status">Development status<a class="anchor" aria-label="anchor" href="#development-status"></a>
 </h3>
-<ul>
-<li>
-<code><a href="reference/inferCurrentVersions.html">inferCurrentVersions()</a></code> — Detect installed data model versions by fingerprinting database schema</li>
-<li>
-<code><a href="reference/migrateResultsModel.html">migrateResultsModel()</a></code> — Execute migration chain to upgrade schema to target versions</li>
-<li>
-<code><a href="reference/convertCsvToYaml.html">convertCsvToYaml()</a></code> — Convert legacy CSV specifications to YAML module definitions</li>
-<li>
-<code><a href="reference/yamlDefinitionToSql.html">yamlDefinitionToSql()</a></code> — Generate OHDSI SQL CREATE TABLE statements from YAML</li>
-<li>
-<code><a href="reference/generateModuleDdl.html">generateModuleDdl()</a></code> — Compile DDL for specific modules with proper table ordering</li>
-<li>
-<code><a href="reference/testMigrationSql.html">testMigrationSql()</a></code> — Validate migration SQL files transform schemas correctly</li>
-<li>
-<code><a href="reference/applyMigrationSql.html">applyMigrationSql()</a></code> — Execute migration SQL via SqlRender with dialect translation</li>
-</ul>
+<p>HadesResultsModel is under development. There are no guarantees on stability or backwards compatibility at this point.</p>
 </div>
-<div class="section level3">
-<h3 id="internal-not-exported">Internal (Not Exported)<a class="anchor" aria-label="anchor" href="#internal-not-exported"></a>
-</h3>
-<ul>
-<li>
-<code><a href="reference/generateReleaseDdl.html">generateReleaseDdl()</a></code> — Compile holistic DDL for entire releases (used by maintainers)</li>
-<li>
-<code><a href="reference/findLatestReleaseManifest.html">findLatestReleaseManifest()</a></code> — Locate the latest quarterly release manifest</li>
-</ul>
-</div>
-</div>
-<div class="section level2">
-<h2 id="for-maintainers">For Maintainers<a class="anchor" aria-label="anchor" href="#for-maintainers"></a>
-</h2>
-<p>Operational workflows are documented in <a href="MAINTAINER.html">MAINTAINER.md</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

@@ -9,7 +9,5 @@ docs
 .github
 ^CRAN-SUBMISSION$
 revdep/
-sql/
 extras/
 current_csvs/
-MAINTAINER.md

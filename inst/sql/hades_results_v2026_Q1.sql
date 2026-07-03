@@ -1,5 +1,5 @@
--- HADES ecosystem release: v2026_Q3
--- Generated from manifest: release_v2026_Q3.yaml
+-- HADES ecosystem release: v2026_Q1
+-- Generated from manifest: release_v2026_Q1.yaml
 
 -- Module: CohortGenerator
 CREATE TABLE IF NOT EXISTS "cg_cohort_definition" (
