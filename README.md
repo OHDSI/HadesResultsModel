@@ -1,17 +1,18 @@
-# HadesResultsModel
+HadesResultsModel
+=================
 
-`HadesResultsModel` is an R package that bundles OHDSI HADES results model resources and utilities.
+This repository describes the OHDSI HADES results model. These are the tables that are populated by the various HADES packages, often as part of a [Strategus](https://ohdsi.github.io/Strategus/) execution.
+The repository also contains an R package with model resources and utilities.
 
-It includes:
+Here you'll find:
 
-- Versioned YAML module definitions
+- Versioned YAML definitions (per HADES package)
 - Release manifests for quarterly ecosystem versions
-- JSON Schemas for validation
-- R functions to build release manifests and generate holistic DDL
+- JSON Schemas for YAML validation
 
 ## Package-First Layout
 
-This repository now follows standard R package structure. Model resources live under `inst/`:
+This repository follows the standard R package structure. Model resources live under `inst/`:
 
 - `inst/modules/`: versioned module definitions (`<ModuleName>/v<semver>/definition.yaml`)
 - `inst/releases/`: release manifests (`release_vYYYY_QX.yaml`)
@@ -22,7 +23,6 @@ This repository now follows standard R package structure. Model resources live u
 - `current_csvs/`: legacy CSV source material used for conversion/reference
 - `sql/`: generated holistic SQL output (working/output directory)
 
-When the package is installed, files under `inst/` are available through `system.file(...)`.
 
 ## Quick Start
 

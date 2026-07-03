@@ -1,0 +1,25 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/404.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/MAINTAINER.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/articles/ResultsModelOverview.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/articles/index.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/articles/results-model-overview.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/authors.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/index.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/news/index.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/HadesResultsModel-package.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/applyMigrationSql.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/buildLatestRelease.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/convertCsvToYaml.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/findLatestReleaseManifest.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/generateModuleDdl.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/generateReleaseDdl.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/getMigrationPath.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/getOrCreateRegistry.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/index.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/inferCurrentVersions.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/migrateResultsModel.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/testMigrationSql.html</loc></url>
+<url><loc>https://ohdsi.github.io/HadesResultsModel/reference/yamlDefinitionToSql.html</loc></url>
+</urlset>
+

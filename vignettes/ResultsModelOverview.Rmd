@@ -1,0 +1,196 @@
+---
+title: "HADES Results Model"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{HADES Results Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4
+)
+
+library(HadesResultsModel)
+```
+
+This vignette renders the latest HADES results model release.
+
+```{r helpers, echo=FALSE}
+resourceDir <- function(component) {
+  installedPath <- system.file(component, package = "HadesResultsModel")
+  if (nzchar(installedPath) && dir.exists(installedPath)) {
+    return(installedPath)
+  }
+
+  devPath <- file.path("inst", component)
+  if (dir.exists(devPath)) {
+    return(normalizePath(devPath, winslash = "/", mustWork = TRUE))
+  }
+
+  stop(sprintf("Could not locate package resource directory: %s", component))
+}
+
+findLatestRelease <- function(releasesDir) {
+  releaseFiles <- list.files(
+    releasesDir,
+    pattern = "^release_v[0-9]{4}_Q[1-4]\\.ya?ml$",
+    full.names = TRUE
+  )
+
+  if (length(releaseFiles) == 0) {
+    stop("No release manifests found.")
+  }
+
+  versions <- sub("^release_(v[0-9]{4}_Q[1-4])\\.ya?ml$", "\\1", basename(releaseFiles))
+  years <- as.integer(sub("^v([0-9]{4})_Q[1-4]$", "\\1", versions))
+  quarters <- as.integer(sub("^v[0-9]{4}_Q([1-4])$", "\\1", versions))
+
+  releaseFiles[[order(years, quarters)[[length(releaseFiles)]]]]
+}
+
+loadLatestReleaseModel <- function() {
+  releasesDir <- resourceDir("releases")
+  modulesDir <- resourceDir("modules")
+
+  releaseFile <- findLatestRelease(releasesDir)
+  manifest <- yaml::read_yaml(releaseFile)
+
+  moduleNames <- names(manifest$modules)
+  if (is.null(moduleNames) || !length(moduleNames)) {
+    stop(sprintf("Invalid release manifest (no modules): %s", releaseFile))
+  }
+
+  moduleDefs <- lapply(moduleNames, function(moduleName) {
+    moduleVersion <- as.character(manifest$modules[[moduleName]])
+    defFile <- file.path(modulesDir, moduleName, moduleVersion, "definition.yaml")
+    if (!file.exists(defFile)) {
+      stop(sprintf("Definition file not found: %s", defFile))
+    }
+    yaml::read_yaml(defFile)
+  })
+  names(moduleDefs) <- moduleNames
+
+  list(
+    releaseFile = releaseFile,
+    manifest = manifest,
+    moduleDefinitions = moduleDefs
+  )
+}
+
+model <- loadLatestReleaseModel()
+```
+
+# Latest release metadata
+
+```{r release-metadata, echo=FALSE}
+releaseInfo <- data.frame(
+  field = c("Release version", "Release date", "Manifest file"),
+  value = c(
+    model$manifest$release_version,
+    model$manifest$release_date,
+    basename(model$releaseFile)
+  ),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(releaseInfo, col.names = c("Field", "Value"))
+```
+
+# Module summary
+
+```{r module-summary, echo=FALSE}
+moduleSummary <- do.call(rbind, lapply(names(model$moduleDefinitions), function(moduleName) {
+  moduleDef <- model$moduleDefinitions[[moduleName]]
+  tableCount <- length(moduleDef$tables)
+  fieldCount <- sum(vapply(moduleDef$tables, function(tbl) length(tbl$fields), integer(1)))
+
+  data.frame(
+    module = moduleName,
+    version = as.character(model$manifest$modules[[moduleName]]),
+    tables = tableCount,
+    fields = fieldCount,
+    stringsAsFactors = FALSE
+  )
+}))
+
+moduleSummary <- moduleSummary[order(moduleSummary$module), ]
+row.names(moduleSummary) <- NULL
+
+knitr::kable(moduleSummary, col.names = c("Module", "Version", "# Tables", "# Fields"))
+```
+
+
+# Field-level details
+
+```{r field-details, results = 'asis', echo=FALSE}
+fieldValueToText <- function(x) {
+  if (is.null(x)) {
+    return("")
+  }
+  if (length(x) == 0) {
+    return("")
+  }
+  if (is.list(x)) {
+    return(paste(vapply(x, fieldValueToText, character(1)), collapse = ", "))
+  }
+  paste(as.character(x), collapse = ", ")
+}
+
+toFieldTable <- function(fields) {
+  allKeys <- unique(unlist(lapply(fields, names)))
+  preferred <- c("name", "type", "description", "is_primary_key", "references", "deprecated")
+  orderedKeys <- c(preferred[preferred %in% allKeys], setdiff(allKeys, preferred))
+
+  rows <- lapply(fields, function(field) {
+    values <- setNames(as.list(rep("", length(orderedKeys))), orderedKeys)
+    for (key in names(field)) {
+      values[[key]] <- fieldValueToText(field[[key]])
+    }
+    as.data.frame(values, stringsAsFactors = FALSE)
+  })
+
+  out <- do.call(rbind, rows)
+  displayNames <- gsub("_", " ", names(out))
+  displayNames <- tools::toTitleCase(displayNames)
+  names(out) <- displayNames
+  out
+}
+
+for (moduleName in sort(names(model$moduleDefinitions))) {
+  moduleDef <- model$moduleDefinitions[[moduleName]]
+  moduleVersion <- as.character(model$manifest$modules[[moduleName]])
+
+  cat("## ", moduleName, " (", moduleVersion, ")\n\n", sep = "")
+  cat("**Prefix:** ", moduleDef$prefix, "\n\n", sep = "")
+  cat("**Tables:** ", length(moduleDef$tables), "\n\n", sep = "")
+
+  for (tbl in moduleDef$tables) {
+    cat("### ", tbl$name, "\n\n", sep = "")
+
+    if (!is.null(tbl$description) && nzchar(tbl$description)) {
+      cat(tbl$description, "\n\n")
+    }
+
+    fieldRows <- lapply(tbl$fields, function(field) {
+      data.frame(
+        name = fieldValueToText(field$name),
+        type = fieldValueToText(field$type),
+        description = fieldValueToText(field$description),
+        is_primary_key = if (isTRUE(field$is_primary_key)) "Yes" else "No",
+        stringsAsFactors = FALSE
+      )
+    })
+
+    fieldDf <- do.call(rbind, fieldRows)
+    names(fieldDf) <- c("Name", "Type", "Description", "Primary Key")
+    cat(knitr::kable(fieldDf), sep = "\n", "\n\n")
+  }
+}
+```

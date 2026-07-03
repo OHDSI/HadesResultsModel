@@ -1,4 +1,4 @@
-release_version: v2026_Q3
+release_version: v2026_Q1
 release_date: '2026-07-02'
 modules:
   Characterization: v1.0.0

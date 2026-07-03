@@ -1,0 +1,19 @@
+url: https://ohdsi.github.io/HadesResultsModel/
+
+template:
+  bootstrap: 5
+  bslib:
+    bootswatch: cosmo
+
+home:
+  links:
+  - text: Ask a question
+    href: http://forums.ohdsi.org
+
+navbar:
+  structure:
+    right: [hades, github]
+  components:
+    hades:
+      text: hadesLogo
+      href: https://ohdsi.github.io/Hades
