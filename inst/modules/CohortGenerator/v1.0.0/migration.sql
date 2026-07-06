@@ -1,4 +1,4 @@
--- Database migrations for version 1.1.0
+-- Database migrations for version 1.0.0
 -- Adds cg_cohort_attrition to store sequential attrition derived from inclusion stats
 -- Adds cg_cohort_subset_attrition to store sequential attrition for cohort subset operators
 -- Adds cg_cohort_subset_operator to store subset operators per definition
